@@ -59,8 +59,8 @@ export default function Home() {
       {/* Header / Nav */}
       <header className="fixed top-0 w-full p-4 flex justify-between items-center z-10 bg-background/80 backdrop-blur-md border-b border-border/50">
         <div className="font-serif font-semibold text-lg tracking-tight text-primary flex items-center gap-2">
-          <span className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs shadow-sm">W</span>
-          Transformer
+          <span className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs shadow-sm">M</span>
+          Morpholex
         </div>
         <button
           onClick={toggleTheme}
@@ -80,7 +80,7 @@ export default function Home() {
           {!hasSearched && (
             <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <h1 className="font-serif text-5xl md:text-6xl text-foreground tracking-tight mb-4">
-                Lexical Patterns
+                Morpholex
               </h1>
               <p className="text-muted-foreground text-lg md:text-xl font-light">
                 Discover the morphological landscape of any English word.

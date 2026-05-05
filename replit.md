@@ -1,6 +1,8 @@
-# Workspace
+# Morpholex
 
 ## Overview
+
+A word morphology search engine. Users type any English word and get all its morphological transformations grouped by category (nouns, verbs, adjectives, adverbs, prefixed forms, etc.). Powered by Google Gemini AI.
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
