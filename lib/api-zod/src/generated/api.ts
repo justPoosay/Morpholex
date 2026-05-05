@@ -14,3 +14,31 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Takes an English word (noun/verb in primary form) and returns all morphological transformations grouped by category
+ * @summary Transform a word
+ */
+export const transformWordBodyWordMax = 100;
+
+export const TransformWordBody = zod.object({
+  word: zod
+    .string()
+    .min(1)
+    .max(transformWordBodyWordMax)
+    .describe("The English word in its primary form"),
+});
+
+export const TransformWordResponse = zod.object({
+  originalWord: zod.string(),
+  groups: zod.array(
+    zod.object({
+      category: zod
+        .string()
+        .describe(
+          'The grammatical or morphological category (e.g. \"Adjectives\", \"Adverbs\", \"Verb forms\", \"Nouns\")',
+        ),
+      words: zod.array(zod.string()).describe("Words in this category"),
+    }),
+  ),
+});

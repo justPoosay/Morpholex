@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: words
+    description: Word transformation operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /words/transform:
+    post:
+      operationId: transformWord
+      tags: [words]
+      summary: Transform a word
+      description: Takes an English word (noun/verb in primary form) and returns all morphological transformations grouped by category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransformWordBody"
+      responses:
+        "200":
+          description: Word transformations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransformWordResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +60,46 @@ components:
           type: string
       required:
         - status
-
+    TransformWordBody:
+      type: object
+      properties:
+        word:
+          type: string
+          description: The English word in its primary form
+          minLength: 1
+          maxLength: 100
+      required:
+        - word
+    WordGroup:
+      type: object
+      properties:
+        category:
+          type: string
+          description: The grammatical or morphological category (e.g. "Adjectives", "Adverbs", "Verb forms", "Nouns")
+        words:
+          type: array
+          items:
+            type: string
+          description: Words in this category
+      required:
+        - category
+        - words
+    TransformWordResult:
+      type: object
+      properties:
+        originalWord:
+          type: string
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/WordGroup"
+      required:
+        - originalWord
+        - groups
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

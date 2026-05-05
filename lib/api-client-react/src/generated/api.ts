@@ -5,18 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ErrorResponse,
+  HealthStatus,
+  TransformWordBody,
+  TransformWordResult,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +107,90 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Takes an English word (noun/verb in primary form) and returns all morphological transformations grouped by category
+ * @summary Transform a word
+ */
+export const getTransformWordUrl = () => {
+  return `/api/words/transform`;
+};
+
+export const transformWord = async (
+  transformWordBody: TransformWordBody,
+  options?: RequestInit,
+): Promise<TransformWordResult> => {
+  return customFetch<TransformWordResult>(getTransformWordUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(transformWordBody),
+  });
+};
+
+export const getTransformWordMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof transformWord>>,
+    TError,
+    { data: BodyType<TransformWordBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof transformWord>>,
+  TError,
+  { data: BodyType<TransformWordBody> },
+  TContext
+> => {
+  const mutationKey = ["transformWord"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof transformWord>>,
+    { data: BodyType<TransformWordBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return transformWord(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TransformWordMutationResult = NonNullable<
+  Awaited<ReturnType<typeof transformWord>>
+>;
+export type TransformWordMutationBody = BodyType<TransformWordBody>;
+export type TransformWordMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Transform a word
+ */
+export const useTransformWord = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof transformWord>>,
+    TError,
+    { data: BodyType<TransformWordBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof transformWord>>,
+  TError,
+  { data: BodyType<TransformWordBody> },
+  TContext
+> => {
+  return useMutation(getTransformWordMutationOptions(options));
+};

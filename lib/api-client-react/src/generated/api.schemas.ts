@@ -8,3 +8,28 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface TransformWordBody {
+  /**
+   * The English word in its primary form
+   * @minLength 1
+   * @maxLength 100
+   */
+  word: string;
+}
+
+export interface WordGroup {
+  /** The grammatical or morphological category (e.g. "Adjectives", "Adverbs", "Verb forms", "Nouns") */
+  category: string;
+  /** Words in this category */
+  words: string[];
+}
+
+export interface TransformWordResult {
+  originalWord: string;
+  groups: WordGroup[];
+}
+
+export interface ErrorResponse {
+  error: string;
+}
