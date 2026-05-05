@@ -8,20 +8,20 @@ const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash-lite",
   generationConfig: {
     responseMimeType: "application/json",
-    maxOutputTokens: 2048,
+    maxOutputTokens: 4096,
   },
 });
 
-async function generateWithRetry(prompt: string, retries = 4): Promise<string> {
+async function generateWithRetry(prompt: string, retries = 5): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const result = await model.generateContent(prompt);
       return result.response.text();
     } catch (err: unknown) {
-      const isRateLimit =
-        err instanceof Error && err.message.includes("429");
-      if (isRateLimit && attempt < retries) {
-        const delay = 2000 * Math.pow(2, attempt);
+      const msg = err instanceof Error ? err.message : String(err);
+      const isRetryable = msg.includes("429") || msg.includes("503") || msg.includes("overloaded");
+      if (isRetryable && attempt < retries) {
+        const delay = 1500 * Math.pow(2, attempt);
         await new Promise((r) => setTimeout(r, delay));
         continue;
       }
@@ -50,15 +50,29 @@ router.post("/words/transform", async (req, res): Promise<void> => {
 
   req.log.info({ word: trimmedWord }, "Generating word transformations");
 
-  const prompt = `You are a linguistics assistant specializing in English morphology.
-List all morphological transformations of the word: "${trimmedWord}"
+  const prompt = `You are an expert English morphologist at C2 level. Your task is to find ALL words that belong to the same word family as the input word.
 
-Include: adjectives, adverbs, nouns (plural, agent nouns, abstract nouns), verb forms (infinitive, gerund, past tense, past participle, 3rd person singular), prefixed/negative forms (un-, in-, dis-, re-, etc.), and any other derived forms sharing the same root.
-Do NOT include synonyms or words with different meanings.
+Input word: "${trimmedWord}"
 
-Respond ONLY with valid JSON in this exact structure:
-{"groups":[{"category":"Category Name","words":["word1","word2"]}]}
-Only include categories that have at least one word.`;
+Instructions:
+1. First identify the ROOT of the word (e.g. "height" → root is "high/height"; "consideration" → root is "consider").
+2. From that root, generate EVERY possible morphological derivative including:
+   - All noun forms (base noun, plural, abstract nouns, agent nouns, gerund-nouns)
+   - All verb forms (base infinitive, 3rd person singular, past simple, past participle, gerund/present participle)
+   - All adjective forms (base, comparative, superlative, participial adjectives)
+   - All adverb forms
+   - All prefixed/negative forms with common prefixes: un-, in-, im-, ir-, dis-, re-, over-, under-, mis-, non-, pre-, post-, co-, de-
+   - All suffixed derivatives (e.g. -ness, -ity, -tion, -ment, -er, -or, -ist, -ism, -ful, -less, -able, -ible, -ive, -al, -ic, -ous, -ify, -ize, -en, -ly)
+3. Include the input word itself in the appropriate category.
+4. Be exhaustive — think of ALL derivatives even less common ones.
+5. Do NOT include true synonyms (different roots). Only include words sharing the same morphological root.
+
+Example: for "height" you would include: height, heights, high, higher, highest, highly, highs, heighten, heightens, heightened, heightening, unhigh (if valid), on high, etc.
+
+Respond ONLY with this exact JSON structure, no markdown:
+{"groups":[{"category":"Nouns","words":["..."]},{"category":"Verbs","words":["..."]},{"category":"Adjectives","words":["..."]},{"category":"Adverbs","words":["..."]},{"category":"Prefixed / Negative Forms","words":["..."]}]}
+
+Only include a category if it has valid words. You may add extra categories for other derivative types.`;
 
   const rawContent = await generateWithRetry(prompt);
 
