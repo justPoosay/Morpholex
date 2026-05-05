@@ -1,6 +1,35 @@
 import { Router, type IRouter } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { TransformWordBody, TransformWordResponse } from "@workspace/api-zod";
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.5-flash-lite",
+  generationConfig: {
+    responseMimeType: "application/json",
+    maxOutputTokens: 2048,
+  },
+});
+
+async function generateWithRetry(prompt: string, retries = 4): Promise<string> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (err: unknown) {
+      const isRateLimit =
+        err instanceof Error && err.message.includes("429");
+      if (isRateLimit && attempt < retries) {
+        const delay = 2000 * Math.pow(2, attempt);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
 
 const router: IRouter = Router();
 
@@ -12,8 +41,8 @@ router.post("/words/transform", async (req, res): Promise<void> => {
   }
 
   const { word } = parsed.data;
-
   const trimmedWord = word.trim().toLowerCase();
+
   if (!trimmedWord) {
     res.status(400).json({ error: "Word must not be empty." });
     return;
@@ -21,34 +50,22 @@ router.post("/words/transform", async (req, res): Promise<void> => {
 
   req.log.info({ word: trimmedWord }, "Generating word transformations");
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    max_completion_tokens: 2048,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content: `You are a linguistics assistant specializing in English morphology.
-When given an English word, return all its morphological transformations grouped by grammatical category.
-Include: adjectives, adverbs, nouns (plural forms, agent nouns, abstract nouns), verb forms (infinitive, gerund, past tense, past participle, 3rd person singular present), prefixed/negative forms (e.g. un-, in-, dis-, re-), and any other relevant derived forms.
-Do NOT include synonyms or words with different meanings — only morphological derivatives sharing the same root.
-You MUST respond with valid JSON only, no markdown, no extra text. Use this exact structure:
+  const prompt = `You are a linguistics assistant specializing in English morphology.
+List all morphological transformations of the word: "${trimmedWord}"
+
+Include: adjectives, adverbs, nouns (plural, agent nouns, abstract nouns), verb forms (infinitive, gerund, past tense, past participle, 3rd person singular), prefixed/negative forms (un-, in-, dis-, re-, etc.), and any other derived forms sharing the same root.
+Do NOT include synonyms or words with different meanings.
+
+Respond ONLY with valid JSON in this exact structure:
 {"groups":[{"category":"Category Name","words":["word1","word2"]}]}
-Only include groups that have at least one word.`,
-      },
-      {
-        role: "user",
-        content: `List all morphological transformations of: "${trimmedWord}"`,
-      },
-    ],
-  });
+Only include categories that have at least one word.`;
 
-  const rawContent = completion.choices[0]?.message?.content ?? "";
+  const rawContent = await generateWithRetry(prompt);
 
-  req.log.info({ rawContent, finishReason: completion.choices[0]?.finish_reason }, "AI response received");
+  req.log.info({ rawContent }, "AI response received");
 
   if (!rawContent) {
-    req.log.error({ completion }, "AI returned empty content");
+    req.log.error("AI returned empty content");
     res.status(500).json({ error: "AI returned an empty response." });
     return;
   }
@@ -66,12 +83,8 @@ Only include groups that have at least one word.`,
     (g) => Array.isArray(g.words) && g.words.length > 0
   );
 
-  const result = TransformWordResponse.parse({
-    originalWord: trimmedWord,
-    groups,
-  });
-
-  res.json(result);
+  const response = TransformWordResponse.parse({ originalWord: trimmedWord, groups });
+  res.json(response);
 });
 
 export default router;
