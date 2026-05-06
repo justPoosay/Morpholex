@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
 import { useTransformWord } from "@workspace/api-client-react";
 import { useTheme } from "@/components/theme-provider";
+import { MorpholexIcon } from "@/components/morpholex-logo";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
@@ -59,7 +60,7 @@ export default function Home() {
       {/* Header / Nav */}
       <header className="fixed top-0 w-full p-4 flex justify-between items-center z-10 bg-background/80 backdrop-blur-md border-b border-border/50">
         <div className="font-serif font-semibold text-lg tracking-tight text-primary flex items-center gap-2">
-          <span className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs shadow-sm">M</span>
+          <MorpholexIcon size={28} />
           Morpholex
         </div>
         <button
