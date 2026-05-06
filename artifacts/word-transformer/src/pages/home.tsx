@@ -58,7 +58,7 @@ export default function Home() {
     <div className="min-h-[100dvh] bg-background text-foreground transition-colors duration-300 font-sans selection:bg-primary/20 selection:text-primary">
       {/* Header / Nav */}
       <header className="fixed top-0 w-full p-4 flex justify-between items-center z-10 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="font-serif font-semibold text-lg tracking-tight text-primary flex items-center gap-1.5">
+        <div className="font-serif font-semibold text-lg tracking-tight text-primary flex items-center gap-0.5">
           <span className="w-6 h-6 rounded bg-[#FF3C00] text-white flex items-center justify-center text-xs shadow-sm font-serif font-semibold">M</span>
           <span>orpholex</span>
         </div>
