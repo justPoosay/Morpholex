@@ -18,13 +18,12 @@
   },
   "private": true,
   "devDependencies": {
-    "jiti": "^2.6.1",
+    "jiti": "2.6.1",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"
   },
   "overrides": {
     "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0",
-    "esbuild": "0.27.3",
-    "jiti": "2.6.1"
+    "esbuild": "0.27.3"
   }
 }
