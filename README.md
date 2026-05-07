@@ -47,14 +47,13 @@ The frontend runs at `http://localhost:21707` and proxies API requests to `http:
 npm run typecheck                         # full typecheck across all packages
 npm run build                             # typecheck + build all packages
 npm run build:netlify                     # build the frontend for Netlify
-npm run codegen                           # regenerate API hooks and Zod schemas from OpenAPI spec
 ```
 
 ## Project Structure
 
 ```txt
 frontend/           React frontend, Vite config, generated React Query API client
-backend/            Express API for local dev, Netlify Functions, OpenAPI spec/codegen
+backend/            Express API for local dev, Netlify Functions
 ```
 
 ## Deploying to Netlify

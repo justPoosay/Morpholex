@@ -13,8 +13,7 @@
     "dev:backend": "npm run dev --workspace backend",
     "build": "npm run typecheck && npm run build --workspaces --if-present",
     "build:netlify": "npm run typecheck && npm run build --workspace frontend",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "codegen": "npm run codegen --workspace backend"
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "private": true,
   "devDependencies": {
