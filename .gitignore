@@ -28,6 +28,7 @@ node_modules
 !.vscode/extensions.json
 
 # misc
+/.env
 /.sass-cache
 /connect.lock
 /coverage
@@ -44,6 +45,5 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
 .cache/
 .local/

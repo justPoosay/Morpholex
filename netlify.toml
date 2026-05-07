@@ -1,0 +1,22 @@
+[build]
+  command = "npm run build:netlify"
+  publish = "frontend/dist/public"
+  functions = "backend/netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/healthz"
+  to = "/.netlify/functions/healthz"
+  status = 200
+
+[[redirects]]
+  from = "/api/words/transform"
+  to = "/.netlify/functions/words-transform"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

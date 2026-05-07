@@ -1,72 +1,84 @@
 # Morpholex
 
-A word morphology search engine. Type any English word and get all its morphological transformations grouped by category — nouns, verbs, adjectives, adverbs, prefixed forms, and more. Powered by Google Gemini AI.
+A word morphology search engine. Type any English word and get all its morphological transformations grouped by category: nouns, verbs, adjectives, adverbs, prefixed forms, and more. Powered by Google Gemini AI.
 
 ## Stack
 
 - **Frontend**: React 19 + Vite, Tailwind CSS, Playfair Display / Inter fonts
-- **Backend**: Express 5, Node.js 24
+- **Backend**: Express 5 locally, Netlify Functions in production
 - **AI**: Google Gemini (`gemini-2.5-flash-lite`) via `@google/generative-ai`
-- **Database**: PostgreSQL + Drizzle ORM
-- **Monorepo**: pnpm workspaces + TypeScript
+- **Monorepo**: npm workspaces + TypeScript
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 24+
-- pnpm
-- A Google AI Studio API key (free at https://aistudio.google.com/apikey)
-- A PostgreSQL database
+- npm
+- A Google AI Studio API key from https://aistudio.google.com/apikey
 
 ### Environment Variables
 
 Create a `.env` file in the repo root:
 
-```
+```bash
 GOOGLE_AI_API_KEY=your_key_here
-SESSION_SECRET=any_long_random_string
-DATABASE_URL=postgresql://user:password@host:5432/dbname
+PORT=8080
+NODE_ENV=development
 ```
 
 ### Running Locally
 
 ```bash
-pnpm install
+npm install
 
 # Start the API server
-pnpm --filter @workspace/api-server run dev
+npm run dev:backend
 
-# Start the frontend (separate terminal)
-pnpm --filter @workspace/word-transformer run dev
+# Start the frontend in a separate terminal
+npm run dev:frontend
 ```
 
-The frontend runs at `http://localhost:<PORT>` and the API at `/api`.
+The frontend runs at `http://localhost:21707` and proxies API requests to `http://localhost:8080/api`.
 
 ### Other Commands
 
 ```bash
-pnpm run typecheck                        # full typecheck across all packages
-pnpm run build                            # typecheck + build all packages
-pnpm --filter @workspace/api-spec run codegen  # regenerate API hooks from OpenAPI spec
-pnpm --filter @workspace/db run push      # push DB schema changes (dev only)
+npm run typecheck                         # full typecheck across all packages
+npm run build                             # typecheck + build all packages
+npm run build:netlify                     # build the frontend for Netlify
+npm run codegen                           # regenerate API hooks and Zod schemas from OpenAPI spec
 ```
 
 ## Project Structure
 
-```
-artifacts/
-  api-server/       Express API (AI route, DB access)
-  word-transformer/ React frontend
-lib/
-  api-spec/         OpenAPI spec + Orval codegen config
-  api-client-react/ Generated React Query hooks
-  api-zod/          Generated Zod schemas
-  db/               Drizzle schema and client
-scripts/            Shared utility scripts
+```txt
+frontend/           React frontend, Vite config, generated React Query API client
+backend/            Express API for local dev, Netlify Functions, OpenAPI spec/codegen
 ```
 
-## TODO
+## Deploying to Netlify
 
-- Improve search time — the AI response latency is noticeable; explore caching results in the database so repeated lookups are instant.
-- Add word definition by clicking a word — when a user clicks any word in the results, show its dictionary definition using a public English dictionary API (e.g. Free Dictionary API at `https://api.dictionaryapi.dev`).
+This repo includes `netlify.toml`, so Netlify can deploy it from the repo root.
+
+1. Push this branch to GitHub.
+2. In Netlify, choose **Add new project** -> **Import an existing project**.
+3. Connect the GitHub repo and select this branch.
+4. Use these build settings:
+
+```txt
+Base directory: leave empty
+Build command: npm run build:netlify
+Publish directory: frontend/dist/public
+Functions directory: backend/netlify/functions
+```
+
+5. Add this environment variable in Netlify:
+
+```txt
+GOOGLE_AI_API_KEY=your_key_here
+```
+
+6. Deploy the site.
+
+The production API runs through Netlify Functions at `/api/healthz` and `/api/words/transform`, so the frontend can keep using `/api/...` requests without exposing the Gemini API key.
