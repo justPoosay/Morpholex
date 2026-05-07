@@ -7,17 +7,29 @@ type WordTransformLogger = {
   error: (data: object | string, message?: string) => void;
 };
 
+type WordTransformErrorOptions = {
+  retryable?: boolean;
+};
+
 export class WordTransformError extends Error {
   readonly statusCode: number;
   readonly publicMessage: string;
+  readonly retryable: boolean;
 
-  constructor(statusCode: number, publicMessage: string) {
+  constructor(
+    statusCode: number,
+    publicMessage: string,
+    options: WordTransformErrorOptions = {},
+  ) {
     super(publicMessage);
     this.name = "WordTransformError";
     this.statusCode = statusCode;
     this.publicMessage = publicMessage;
+    this.retryable = options.retryable ?? false;
   }
 }
+
+const TRANSFORM_ATTEMPTS = 2;
 
 let model: GenerativeModel | null = null;
 
@@ -90,6 +102,59 @@ Respond ONLY with this exact JSON structure, no markdown:
 Only include a category if it has valid words. You may add extra categories for other derivative types.`;
 }
 
+function shouldRetryTransform(err: unknown): boolean {
+  if (err instanceof WordTransformError) {
+    return err.retryable;
+  }
+
+  return true;
+}
+
+async function transformWordOnce(
+  trimmedWord: string,
+  attempt: number,
+  logger?: WordTransformLogger,
+) {
+  logger?.info(
+    { word: trimmedWord, attempt, maxAttempts: TRANSFORM_ATTEMPTS },
+    "Generating word transformations",
+  );
+
+  const rawContent = await generateWithRetry(buildPrompt(trimmedWord));
+
+  logger?.info({ rawContent, attempt }, "AI response received");
+
+  if (!rawContent) {
+    logger?.error({ attempt }, "AI returned empty content");
+    throw new WordTransformError(500, "AI returned an empty response.", {
+      retryable: true,
+    });
+  }
+
+  let parsedJson: { groups?: { category: string; words: string[] }[] };
+  try {
+    parsedJson = JSON.parse(rawContent);
+  } catch {
+    logger?.error({ rawContent, attempt }, "Failed to parse AI response as JSON");
+    throw new WordTransformError(500, "Failed to parse AI response.", {
+      retryable: true,
+    });
+  }
+
+  const groups = (parsedJson.groups ?? []).filter(
+    (group) => Array.isArray(group.words) && group.words.length > 0,
+  );
+
+  if (groups.length === 0) {
+    logger?.error({ rawContent, attempt }, "AI returned no word transformations");
+    throw new WordTransformError(500, "AI did not return any word transformations.", {
+      retryable: true,
+    });
+  }
+
+  return TransformWordResponse.parse({ originalWord: trimmedWord, groups });
+}
+
 export async function transformWord(word: string, logger?: WordTransformLogger) {
   const trimmedWord = word.trim().toLowerCase();
 
@@ -97,28 +162,21 @@ export async function transformWord(word: string, logger?: WordTransformLogger) 
     throw new WordTransformError(400, "Word must not be empty.");
   }
 
-  logger?.info({ word: trimmedWord }, "Generating word transformations");
+  for (let attempt = 1; attempt <= TRANSFORM_ATTEMPTS; attempt++) {
+    try {
+      return await transformWordOnce(trimmedWord, attempt, logger);
+    } catch (err) {
+      if (attempt < TRANSFORM_ATTEMPTS && shouldRetryTransform(err)) {
+        logger?.error(
+          { err, word: trimmedWord, attempt, nextAttempt: attempt + 1 },
+          "Retrying word transformation after AI failure",
+        );
+        continue;
+      }
 
-  const rawContent = await generateWithRetry(buildPrompt(trimmedWord));
-
-  logger?.info({ rawContent }, "AI response received");
-
-  if (!rawContent) {
-    logger?.error("AI returned empty content");
-    throw new WordTransformError(500, "AI returned an empty response.");
+      throw err;
+    }
   }
 
-  let parsedJson: { groups?: { category: string; words: string[] }[] };
-  try {
-    parsedJson = JSON.parse(rawContent);
-  } catch {
-    logger?.error({ rawContent }, "Failed to parse AI response as JSON");
-    throw new WordTransformError(500, "Failed to parse AI response.");
-  }
-
-  const groups = (parsedJson.groups ?? []).filter(
-    (group) => Array.isArray(group.words) && group.words.length > 0,
-  );
-
-  return TransformWordResponse.parse({ originalWord: trimmedWord, groups });
+  throw new Error("Word transformation failed unexpectedly.");
 }
