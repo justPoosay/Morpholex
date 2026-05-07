@@ -1,16 +1,33 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
-import { useTransformWord } from "@/api";
+import { ApiError, useTransformWord } from "@/api";
 import { useTheme } from "@/components/theme-provider";
 import { useWordDefinition } from "@/hooks/use-word-definition";
 import { WordDefinitionDialog } from "@/components/word-definition-dialog";
+
+const RETRYABLE_API_STATUSES = new Set([500, 502, 503, 504]);
+
+function shouldRetryTransformRequest(failureCount: number, error: unknown) {
+  if (failureCount >= 1) return false;
+
+  if (error instanceof ApiError) {
+    return RETRYABLE_API_STATUSES.has(error.status);
+  }
+
+  return error instanceof TypeError;
+}
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const { theme, setTheme } = useTheme();
   
-  const transformMutation = useTransformWord();
+  const transformMutation = useTransformWord({
+    mutation: {
+      retry: shouldRetryTransformRequest,
+      retryDelay: 750,
+    },
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const wordDef = useWordDefinition();
 
