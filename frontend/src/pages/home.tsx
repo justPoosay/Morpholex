@@ -1,22 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
-import { ApiError, transformWord, useTransformWord } from "@/api";
-import type { TransformWordResult } from "@/api";
+import { ApiError, useTransformWord } from "@/api";
 import { useTheme } from "@/components/theme-provider";
 import { useWordDefinition } from "@/hooks/use-word-definition";
 import { WordDefinitionDialog } from "@/components/word-definition-dialog";
 
 const RETRYABLE_API_STATUSES = new Set([500, 502, 503, 504]);
-const TRANSFORM_CACHE_KEY = "morpholex-transform-cache-v1";
-const TRANSFORM_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-const TRANSFORM_CACHE_MAX_ENTRIES = 50;
-
-type TransformCacheEntry = {
-  savedAt: number;
-  result: TransformWordResult;
-};
-
-type TransformCache = Record<string, TransformCacheEntry>;
 
 function shouldRetryTransformRequest(failureCount: number, error: unknown) {
   if (failureCount >= 1) return false;
@@ -28,77 +17,6 @@ function shouldRetryTransformRequest(failureCount: number, error: unknown) {
   return error instanceof TypeError;
 }
 
-function normalizeWord(word: string) {
-  return word.trim().toLowerCase();
-}
-
-function isTransformWordResult(value: unknown): value is TransformWordResult {
-  if (!value || typeof value !== "object") return false;
-
-  const candidate = value as Partial<TransformWordResult>;
-  return (
-    typeof candidate.originalWord === "string" &&
-    Array.isArray(candidate.groups) &&
-    candidate.groups.every(
-      (group) =>
-        group &&
-        typeof group.category === "string" &&
-        Array.isArray(group.words) &&
-        group.words.every((word) => typeof word === "string"),
-    )
-  );
-}
-
-function readTransformCache(): TransformCache {
-  try {
-    const rawCache = localStorage.getItem(TRANSFORM_CACHE_KEY);
-    if (!rawCache) return {};
-
-    const cache = JSON.parse(rawCache);
-    return cache && typeof cache === "object" ? (cache as TransformCache) : {};
-  } catch {
-    return {};
-  }
-}
-
-function writeTransformCache(cache: TransformCache): void {
-  try {
-    localStorage.setItem(TRANSFORM_CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // Ignore storage quota/privacy-mode failures; the API call still works.
-  }
-}
-
-function getCachedTransformResult(word: string): TransformWordResult | null {
-  const cacheKey = normalizeWord(word);
-  const cache = readTransformCache();
-  const entry = cache[cacheKey];
-
-  if (!entry) return null;
-
-  const isExpired = Date.now() - entry.savedAt > TRANSFORM_CACHE_TTL_MS;
-  if (isExpired || !isTransformWordResult(entry.result)) {
-    delete cache[cacheKey];
-    writeTransformCache(cache);
-    return null;
-  }
-
-  return entry.result;
-}
-
-function cacheTransformResult(result: TransformWordResult): void {
-  const cache = readTransformCache();
-  const cacheKey = normalizeWord(result.originalWord);
-
-  cache[cacheKey] = {
-    savedAt: Date.now(),
-    result,
-  };
-
-  const entries = Object.entries(cache).sort(([, a], [, b]) => b.savedAt - a.savedAt);
-  writeTransformCache(Object.fromEntries(entries.slice(0, TRANSFORM_CACHE_MAX_ENTRIES)));
-}
-
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -106,14 +24,6 @@ export default function Home() {
   
   const transformMutation = useTransformWord({
     mutation: {
-      mutationFn: async ({ data }) => {
-        const cachedResult = getCachedTransformResult(data.word);
-        if (cachedResult) return cachedResult;
-
-        const result = await transformWord({ word: normalizeWord(data.word) });
-        cacheTransformResult(result);
-        return result;
-      },
       retry: shouldRetryTransformRequest,
       retryDelay: 750,
     },
