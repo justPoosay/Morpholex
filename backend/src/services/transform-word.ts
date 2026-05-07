@@ -2,6 +2,8 @@ import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai"
 
 import { TransformWordResponse } from "../api-zod";
 
+type TransformWordResult = ReturnType<typeof TransformWordResponse.parse>;
+
 type WordTransformLogger = {
   info: (data: object, message?: string) => void;
   error: (data: object | string, message?: string) => void;
@@ -30,8 +32,16 @@ export class WordTransformError extends Error {
 }
 
 const TRANSFORM_ATTEMPTS = 2;
+const GENERATION_RETRIES = 1;
+const CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+const CACHE_MAX_ENTRIES = 250;
 
 let model: GenerativeModel | null = null;
+const transformCache = new Map<
+  string,
+  { result: TransformWordResult; expiresAt: number; lastAccessedAt: number }
+>();
+const inFlightTransforms = new Map<string, Promise<TransformWordResult>>();
 
 function getModel(): GenerativeModel {
   if (model) return model;
@@ -53,7 +63,57 @@ function getModel(): GenerativeModel {
   return model;
 }
 
-async function generateWithRetry(prompt: string, retries = 5): Promise<string> {
+function getCachedTransform(word: string): TransformWordResult | null {
+  const entry = transformCache.get(word);
+  if (!entry) return null;
+
+  if (entry.expiresAt <= Date.now()) {
+    transformCache.delete(word);
+    return null;
+  }
+
+  entry.lastAccessedAt = Date.now();
+  return entry.result;
+}
+
+function pruneTransformCache(): void {
+  const now = Date.now();
+
+  for (const [word, entry] of transformCache) {
+    if (entry.expiresAt <= now) {
+      transformCache.delete(word);
+    }
+  }
+
+  while (transformCache.size > CACHE_MAX_ENTRIES) {
+    let oldestWord: string | null = null;
+    let oldestAccess = Number.POSITIVE_INFINITY;
+
+    for (const [word, entry] of transformCache) {
+      if (entry.lastAccessedAt < oldestAccess) {
+        oldestWord = word;
+        oldestAccess = entry.lastAccessedAt;
+      }
+    }
+
+    if (!oldestWord) return;
+    transformCache.delete(oldestWord);
+  }
+}
+
+function cacheTransform(word: string, result: TransformWordResult): void {
+  transformCache.set(word, {
+    result,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+    lastAccessedAt: Date.now(),
+  });
+  pruneTransformCache();
+}
+
+async function generateWithRetry(
+  prompt: string,
+  retries = GENERATION_RETRIES,
+): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const result = await getModel().generateContent(prompt);
@@ -64,7 +124,7 @@ async function generateWithRetry(prompt: string, retries = 5): Promise<string> {
         msg.includes("429") || msg.includes("503") || msg.includes("overloaded");
 
       if (isRetryable && attempt < retries) {
-        const delay = 1500 * Math.pow(2, attempt);
+        const delay = 750 * Math.pow(2, attempt);
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
@@ -162,6 +222,34 @@ export async function transformWord(word: string, logger?: WordTransformLogger) 
     throw new WordTransformError(400, "Word must not be empty.");
   }
 
+  const cachedResult = getCachedTransform(trimmedWord);
+  if (cachedResult) {
+    logger?.info({ word: trimmedWord }, "Serving word transformations from cache");
+    return cachedResult;
+  }
+
+  const inFlightTransform = inFlightTransforms.get(trimmedWord);
+  if (inFlightTransform) {
+    logger?.info({ word: trimmedWord }, "Reusing in-flight word transformation");
+    return inFlightTransform;
+  }
+
+  const transformPromise = transformWordFresh(trimmedWord, logger);
+  inFlightTransforms.set(trimmedWord, transformPromise);
+
+  try {
+    const result = await transformPromise;
+    cacheTransform(trimmedWord, result);
+    return result;
+  } finally {
+    inFlightTransforms.delete(trimmedWord);
+  }
+}
+
+async function transformWordFresh(
+  trimmedWord: string,
+  logger?: WordTransformLogger,
+): Promise<TransformWordResult> {
   for (let attempt = 1; attempt <= TRANSFORM_ATTEMPTS; attempt++) {
     try {
       return await transformWordOnce(trimmedWord, attempt, logger);
