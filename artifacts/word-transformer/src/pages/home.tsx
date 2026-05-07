@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
 import { useTransformWord } from "@workspace/api-client-react";
 import { useTheme } from "@/components/theme-provider";
+import { useWordDefinition } from "@/hooks/use-word-definition";
+import { WordDefinitionDialog } from "@/components/word-definition-dialog";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
@@ -10,6 +12,7 @@ export default function Home() {
   
   const transformMutation = useTransformWord();
   const inputRef = useRef<HTMLInputElement>(null);
+  const wordDef = useWordDefinition();
 
   // Load history on mount
   useEffect(() => {
@@ -170,7 +173,7 @@ export default function Home() {
                       {group.words.map((word) => (
                         <button
                           key={word}
-                          onClick={() => handleSearch(word)}
+                          onClick={() => wordDef.lookup(word)}
                           className="px-3.5 py-2 rounded-lg bg-card border border-border/80 text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 text-base shadow-sm hover:shadow active:scale-95 text-left"
                           data-testid={`button-word-${word}`}
                         >
@@ -185,6 +188,15 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <WordDefinitionDialog
+        open={wordDef.open}
+        onClose={wordDef.close}
+        definition={wordDef.definition}
+        loading={wordDef.loading}
+        error={wordDef.error}
+        onSearch={handleSearch}
+      />
     </div>
   );
 }
