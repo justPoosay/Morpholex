@@ -47,3 +47,7 @@ Thumbs.db
 
 .cache/
 .local/
+
+# Local Open English WordNet source download/extraction.
+/.tmp-oewn/
+/english-wordnet-*-json.zip

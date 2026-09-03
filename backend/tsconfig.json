@@ -4,7 +4,8 @@
     "outDir": "dist",
     "rootDir": ".",
     "lib": ["es2022", "dom", "dom.iterable"],
-    "types": ["node"]
+    "types": ["node"],
+    "resolveJsonModule": true
   },
   "include": ["src", "netlify/functions"]
 }
