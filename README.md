@@ -9,7 +9,9 @@
 - [x] Prevent obvious generated double plurals such as `heightses`.
 - [x] Remove AI provider dependency/config references from the backend path.
 - [x] Disable the broken definition lookup flow while keeping the frontend definition files available for a possible future restore.
+- [x] Smoke-test the Netlify deployment after the branch is deployed.
+- [x] Fix page layout on mobile devices and different window sizes.
 
 ## To Do
 
-- [ ] Smoke-test the Netlify deployment after the branch is deployed.
+- [ ] Add a small admin/dev stats page.
