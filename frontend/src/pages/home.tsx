@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
 import { ApiError, useTransformWord } from "@/api";
 import { useTheme } from "@/components/theme-provider";
+import {
+  sanitizeWordQueryInput,
+  validateWordQuery,
+  WORD_QUERY_MAX_LENGTH,
+  WORD_QUERY_RULE_MESSAGE,
+} from "@/lib/word-query";
 // Definition lookup is disabled for now. Keep these here for a future restore.
 // import { useWordDefinition } from "@/hooks/use-word-definition";
 // import { WordDefinitionDialog } from "@/components/word-definition-dialog";
@@ -21,6 +27,7 @@ function shouldRetryTransformRequest(failureCount: number, error: unknown) {
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
+  const [queryError, setQueryError] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   
   const transformMutation = useTransformWord({
@@ -54,14 +61,35 @@ export default function Home() {
   };
 
   const handleSearch = (word: string) => {
-    if (!word.trim()) return;
-    const cleanWord = word.trim().toLowerCase();
-    setSearchInput(cleanWord);
-    transformMutation.mutate({ data: { word: cleanWord } }, {
+    const validated = validateWordQuery(word);
+    if (!validated.ok) {
+      setQueryError(validated.message);
+      return;
+    }
+
+    setQueryError(null);
+    setSearchInput(validated.word);
+    transformMutation.mutate({ data: { word: validated.word } }, {
       onSuccess: () => {
-        addToHistory(cleanWord);
+        addToHistory(validated.word);
       }
     });
+  };
+
+  const handleSearchInputChange = (value: string) => {
+    const sanitized = sanitizeWordQueryInput(value);
+    setSearchInput(sanitized);
+
+    if (value.toLowerCase() !== sanitized) {
+      setQueryError(WORD_QUERY_RULE_MESSAGE);
+      return;
+    }
+
+    if (!sanitized || validateWordQuery(sanitized).ok) {
+      setQueryError(null);
+    } else {
+      setQueryError(WORD_QUERY_RULE_MESSAGE);
+    }
   };
 
   const onSubmit = (e: React.FormEvent) => {
@@ -74,6 +102,8 @@ export default function Home() {
   };
 
   const hasSearched = transformMutation.data || transformMutation.isPending;
+  const canSubmit =
+    !transformMutation.isPending && searchInput.trim() !== "" && validateWordQuery(searchInput).ok;
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-background text-foreground transition-colors duration-300 font-sans selection:bg-primary/20 selection:text-primary">
@@ -117,14 +147,18 @@ export default function Home() {
               ref={inputRef}
               type="text"
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="e.g. consider, analyze, light..."
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              placeholder="e.g. consider, can't, light..."
+              maxLength={WORD_QUERY_MAX_LENGTH}
+              aria-invalid={queryError ? "true" : "false"}
+              autoCapitalize="none"
+              spellCheck={false}
               className="w-full rounded-lg border-2 border-border/50 bg-card py-3.5 pl-11 pr-12 text-base shadow-sm transition-all duration-300 placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 sm:rounded-xl sm:py-4 sm:pl-12 sm:pr-14 sm:text-lg md:text-xl"
               data-testid="input-search"
             />
             <button
               type="submit"
-              disabled={!searchInput.trim() || transformMutation.isPending}
+              disabled={!canSubmit}
               className="absolute inset-y-2 right-2 flex aspect-square w-9 items-center justify-center rounded-md bg-primary text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary sm:w-10 sm:rounded-lg"
               data-testid="button-submit-search"
             >
@@ -135,6 +169,11 @@ export default function Home() {
               )}
             </button>
           </form>
+          {queryError && (
+            <p className="mt-3 w-full text-center text-sm text-muted-foreground" data-testid="text-query-rules">
+              {queryError}
+            </p>
+          )}
 
           {/* History Tags - Only show if not searched yet, or small under search */}
           {history.length > 0 && (

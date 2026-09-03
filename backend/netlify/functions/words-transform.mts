@@ -1,5 +1,6 @@
 import { TransformWordBody } from "../../src/api-zod";
 import { transformWord, WordTransformError } from "../../src/services/transform-word";
+import { validateWordQuery } from "../../src/services/word-query";
 
 function jsonResponse(status: number, data: unknown): Response {
   return new Response(JSON.stringify(data), {
@@ -27,8 +28,13 @@ export default async (request: Request) => {
     return jsonResponse(400, { error: parsed.error.message });
   }
 
+  const validated = validateWordQuery(parsed.data.word);
+  if (!validated.ok) {
+    return jsonResponse(400, { error: validated.message });
+  }
+
   try {
-    return jsonResponse(200, await transformWord(parsed.data.word));
+    return jsonResponse(200, await transformWord(validated.word));
   } catch (err) {
     if (err instanceof WordTransformError) {
       return jsonResponse(err.statusCode, { error: err.publicMessage });

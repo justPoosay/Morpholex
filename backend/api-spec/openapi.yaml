@@ -65,9 +65,10 @@ components:
       properties:
         word:
           type: string
-          description: The English word in its primary form
+          description: The English word in its primary form. Only lowercase/uppercase ASCII English letters and keyboard apostrophes are accepted.
           minLength: 1
-          maxLength: 100
+          maxLength: 20
+          pattern: "^[A-Za-z]+(?:'[A-Za-z]+)*$"
       required:
         - word
     WordGroup:

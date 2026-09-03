@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 
 import { TransformWordBody } from "../api-zod";
 import { transformWord, WordTransformError } from "../services/transform-word";
+import { validateWordQuery } from "../services/word-query";
 
 const router: IRouter = Router();
 
@@ -12,8 +13,14 @@ router.post("/words/transform", async (req, res): Promise<void> => {
     return;
   }
 
+  const validated = validateWordQuery(parsed.data.word);
+  if (!validated.ok) {
+    res.status(400).json({ error: validated.message });
+    return;
+  }
+
   try {
-    const response = await transformWord(parsed.data.word, req.log);
+    const response = await transformWord(validated.word, req.log);
     res.json(response);
   } catch (err) {
     if (err instanceof WordTransformError) {

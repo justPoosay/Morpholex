@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import { TransformWordResponse } from "../api-zod";
 import wordFamilies from "../data/word-families.json";
+import { validateWordQuery } from "./word-query";
 
 type WordTransformLogger = {
   info: (data: object, message?: string) => void;
@@ -57,11 +58,12 @@ export async function transformWord(
   word: string,
   logger?: WordTransformLogger,
 ): Promise<TransformWordResult> {
-  const normalizedWord = normalizeWord(word);
-
-  if (!normalizedWord) {
-    throw new WordTransformError(400, "Word must not be empty.");
+  const validated = validateWordQuery(word);
+  if (!validated.ok) {
+    throw new WordTransformError(400, validated.message);
   }
+
+  const normalizedWord = validated.word;
 
   const familyId = dictionary.entries[normalizedWord];
   if (!familyId) {
