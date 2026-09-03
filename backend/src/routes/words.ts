@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 
 import { TransformWordBody } from "../api-zod";
+import { trackSearchEvent, getClientIpFromHeaders } from "../services/search-tracking";
 import { transformWord, WordTransformError } from "../services/transform-word";
 import { validateWordQuery } from "../services/word-query";
 
@@ -20,7 +21,26 @@ router.post("/words/transform", async (req, res): Promise<void> => {
   }
 
   try {
+    const startedAt = performance.now();
     const response = await transformWord(validated.word, req.log);
+    const resultCount = response.groups.reduce((count, group) => count + group.words.length, 0);
+
+    void trackSearchEvent(
+      {
+        query: validated.word,
+        normalizedQuery: response.originalWord,
+        found: resultCount > 0,
+        resultCount,
+        responseMs: Math.round(performance.now() - startedAt),
+        ipAddress: getClientIpFromHeaders(
+          (name) => req.header(name),
+          req.ip ?? null,
+        ),
+        userAgent: req.header("user-agent") ?? null,
+      },
+      req.log,
+    );
+
     res.json(response);
   } catch (err) {
     if (err instanceof WordTransformError) {

@@ -1,4 +1,5 @@
 import { TransformWordBody } from "../../src/api-zod";
+import { getClientIpFromHeaders, trackSearchEvent } from "../../src/services/search-tracking";
 import { transformWord, WordTransformError } from "../../src/services/transform-word";
 import { validateWordQuery } from "../../src/services/word-query";
 
@@ -34,7 +35,21 @@ export default async (request: Request) => {
   }
 
   try {
-    return jsonResponse(200, await transformWord(validated.word));
+    const startedAt = performance.now();
+    const response = await transformWord(validated.word);
+    const resultCount = response.groups.reduce((count, group) => count + group.words.length, 0);
+
+    await trackSearchEvent({
+      query: validated.word,
+      normalizedQuery: response.originalWord,
+      found: resultCount > 0,
+      resultCount,
+      responseMs: Math.round(performance.now() - startedAt),
+      ipAddress: getClientIpFromHeaders((name) => request.headers.get(name)),
+      userAgent: request.headers.get("user-agent"),
+    });
+
+    return jsonResponse(200, response);
   } catch (err) {
     if (err instanceof WordTransformError) {
       return jsonResponse(err.statusCode, { error: err.publicMessage });
