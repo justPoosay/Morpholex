@@ -14,9 +14,9 @@
 - [x] Add a small admin/dev stats page.
 - [x] Prepare the admin panel analytics layout for future search data.
 - [x] Add a shared query safety ruleset before database writes.
+- [x] Add a Postgres `search_events` table and portable database layer.
 
 ## To Do
 
-- [ ] Add a Postgres `search_events` table and portable database layer.
 - [ ] Record safe search events from the backend transform endpoint.
 - [ ] Populate the admin panel with real search analytics from Postgres.
