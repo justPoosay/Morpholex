@@ -5,6 +5,7 @@ import type { WordDefinition } from "@/hooks/use-word-definition";
 interface WordDefinitionDialogProps {
   open: boolean;
   onClose: () => void;
+  word: string;
   definition: WordDefinition | null;
   loading: boolean;
   error: boolean;
@@ -14,6 +15,7 @@ interface WordDefinitionDialogProps {
 export function WordDefinitionDialog({
   open,
   onClose,
+  word,
   definition,
   loading,
   error,
@@ -24,6 +26,11 @@ export function WordDefinitionDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-in fade-in duration-200" />
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg max-h-[80vh] overflow-y-auto bg-card border border-border rounded-2xl shadow-xl p-8 animate-in fade-in zoom-in-95 duration-200 focus:outline-none">
+          {!definition && (
+            <Dialog.Title className="sr-only">
+              {word ? `Definition for ${word}` : "Word definition"}
+            </Dialog.Title>
+          )}
 
           <Dialog.Close
             className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -40,7 +47,7 @@ export function WordDefinitionDialog({
 
           {error && !loading && (
             <div className="py-12 text-center">
-              <p className="text-muted-foreground">No definition found for this word.</p>
+              <p className="text-muted-foreground">No definition found.</p>
             </div>
           )}
 

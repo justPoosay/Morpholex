@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
 import { ApiError, useTransformWord } from "@/api";
 import { useTheme } from "@/components/theme-provider";
-import { useWordDefinition } from "@/hooks/use-word-definition";
-import { WordDefinitionDialog } from "@/components/word-definition-dialog";
+// Definition lookup is disabled for now. Keep these here for a future restore.
+// import { useWordDefinition } from "@/hooks/use-word-definition";
+// import { WordDefinitionDialog } from "@/components/word-definition-dialog";
 
 const RETRYABLE_API_STATUSES = new Set([500, 502, 503, 504]);
 
@@ -29,7 +30,7 @@ export default function Home() {
     },
   });
   const inputRef = useRef<HTMLInputElement>(null);
-  const wordDef = useWordDefinition();
+  // const wordDef = useWordDefinition();
 
   // Load history on mount
   useEffect(() => {
@@ -158,8 +159,8 @@ export default function Home() {
         {/* Results Area */}
         {transformMutation.isError && (
           <div className="mt-12 p-6 bg-destructive/10 border border-destructive/20 rounded-xl text-center text-destructive animate-in fade-in slide-in-from-top-4" data-testid="error-message">
-            <p className="font-medium">Failed to analyze word.</p>
-            <p className="text-sm opacity-80 mt-1">Make sure it's a valid English word and try again.</p>
+            <p className="font-medium">Search unavailable.</p>
+            <p className="text-sm opacity-80 mt-1">Please try again in a moment.</p>
           </div>
         )}
 
@@ -190,7 +191,8 @@ export default function Home() {
                       {group.words.map((word) => (
                         <button
                           key={word}
-                          onClick={() => wordDef.lookup(word)}
+                          type="button"
+                          // onClick={() => wordDef.lookup(word)}
                           className="px-3.5 py-2 rounded-lg bg-card border border-border/80 text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200 text-base shadow-sm hover:shadow active:scale-95 text-left"
                           data-testid={`button-word-${word}`}
                         >
@@ -206,14 +208,17 @@ export default function Home() {
         )}
       </main>
 
+      {/* Definition lookup is disabled for now.
       <WordDefinitionDialog
         open={wordDef.open}
         onClose={wordDef.close}
+        word={wordDef.word}
         definition={wordDef.definition}
         loading={wordDef.loading}
         error={wordDef.error}
         onSearch={handleSearch}
       />
+      */}
     </div>
   );
 }

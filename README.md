@@ -8,8 +8,8 @@
 - [x] Add an irregular derivation overlay for families like `long`/`length`, `high`/`height`, and `wide`/`width`.
 - [x] Prevent obvious generated double plurals such as `heightses`.
 - [x] Remove AI provider dependency/config references from the backend path.
+- [x] Disable the broken definition lookup flow while keeping the frontend definition files available for a possible future restore.
 
 ## To Do
 
-- [ ] Disable the broken definition lookup flow while keeping the frontend definition files available for a possible future restore.
 - [ ] Smoke-test the Netlify deployment after the branch is deployed.

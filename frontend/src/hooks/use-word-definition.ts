@@ -16,52 +16,29 @@ export interface WordDefinition {
   meanings: Meaning[];
 }
 
-interface ApiEntry {
-  word: string;
-  phonetic?: string;
-  phonetics?: { text?: string }[];
-  meanings: {
-    partOfSpeech: string;
-    definitions: { definition: string; example?: string }[];
-  }[];
-}
-
 async function fetchDefinition(word: string): Promise<WordDefinition> {
-  const res = await fetch(
-    `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`
-  );
-  if (!res.ok) throw new Error("No definition found");
-  const data: ApiEntry[] = await res.json();
-  const entry = data[0];
-  const phonetic =
-    entry.phonetic ??
-    entry.phonetics?.find((p) => p.text)?.text;
-  return {
-    word: entry.word,
-    phonetic,
-    meanings: entry.meanings.map((m) => ({
-      partOfSpeech: m.partOfSpeech,
-      definitions: m.definitions.slice(0, 3).map((d) => ({
-        definition: d.definition,
-        example: d.example,
-      })),
-    })),
-  };
+  // Definition lookup is disabled for now. Previous DictionaryAPI.dev wiring
+  // lived here and can be restored when we revisit definitions.
+  void word;
+  throw new Error("Definition lookup disabled");
 }
 
 export function useWordDefinition() {
+  const [word, setWord] = useState("");
   const [definition, setDefinition] = useState<WordDefinition | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);
 
   const lookup = async (word: string) => {
+    const cleanWord = word.trim().toLowerCase();
+    setWord(cleanWord);
     setDefinition(null);
     setError(false);
     setLoading(true);
     setOpen(true);
     try {
-      const result = await fetchDefinition(word);
+      const result = await fetchDefinition(cleanWord);
       setDefinition(result);
     } catch {
       setError(true);
@@ -72,5 +49,5 @@ export function useWordDefinition() {
 
   const close = () => setOpen(false);
 
-  return { definition, loading, error, open, lookup, close };
+  return { word, definition, loading, error, open, lookup, close };
 }
