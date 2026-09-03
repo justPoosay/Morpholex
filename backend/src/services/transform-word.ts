@@ -1,4 +1,6 @@
-import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai";
+import OpenAI, { APIError } from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
+import type { z } from "zod";
 
 import { TransformWordResponse } from "../api-zod";
 
@@ -30,56 +32,70 @@ export class WordTransformError extends Error {
 }
 
 const TRANSFORM_ATTEMPTS = 2;
+const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-5.4-nano";
+const OPENAI_TIMEOUT_MS = 20_000;
+const TRANSFORM_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const TRANSFORM_CACHE_MAX_ENTRIES = 500;
 
-let model: GenerativeModel | null = null;
+type TransformWordResult = z.infer<typeof TransformWordResponse>;
 
-function getModel(): GenerativeModel {
-  if (model) return model;
+let client: OpenAI | null = null;
+const transformCache = new Map<
+  string,
+  { expiresAt: number; result: TransformWordResult }
+>();
+const inFlightTransforms = new Map<string, Promise<TransformWordResult>>();
+const responseFormat = zodTextFormat(
+  TransformWordResponse,
+  "word_transform_response",
+);
 
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
+function getClient(): OpenAI {
+  if (client) return client;
+
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new WordTransformError(500, "GOOGLE_AI_API_KEY is not configured.");
+    throw new WordTransformError(500, "OPENAI_API_KEY is not configured.");
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
-    generationConfig: {
-      responseMimeType: "application/json",
-      maxOutputTokens: 4096,
-    },
+  client = new OpenAI({
+    apiKey,
+    maxRetries: 1,
+    timeout: OPENAI_TIMEOUT_MS,
   });
 
-  return model;
+  return client;
 }
 
-async function generateWithRetry(prompt: string, retries = 5): Promise<string> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const result = await getModel().generateContent(prompt);
-      return result.response.text();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const isRetryable =
-        msg.includes("429") || msg.includes("503") || msg.includes("overloaded");
+function getCachedTransform(word: string): TransformWordResult | null {
+  const cached = transformCache.get(word);
+  if (!cached) return null;
 
-      if (isRetryable && attempt < retries) {
-        const delay = 1500 * Math.pow(2, attempt);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        continue;
-      }
-
-      throw err;
-    }
+  if (cached.expiresAt <= Date.now()) {
+    transformCache.delete(word);
+    return null;
   }
 
-  throw new Error("Max retries exceeded");
+  transformCache.delete(word);
+  transformCache.set(word, cached);
+  return cached.result;
 }
 
-function buildPrompt(trimmedWord: string): string {
-  return `You are an expert English morphologist at C2 level. Your task is to find ALL words that belong to the same word family as the input word.
+function cacheTransform(word: string, result: TransformWordResult) {
+  transformCache.set(word, {
+    expiresAt: Date.now() + TRANSFORM_CACHE_TTL_MS,
+    result,
+  });
 
-Input word: "${trimmedWord}"
+  while (transformCache.size > TRANSFORM_CACHE_MAX_ENTRIES) {
+    const oldestKey = transformCache.keys().next().value;
+    if (!oldestKey) break;
+    transformCache.delete(oldestKey);
+  }
+}
+
+function buildInstructions(): string {
+  return `You are an expert English morphologist at C2 level. Your task is to find ALL words that belong to the same word family as the input word.
 
 Instructions:
 1. First identify the ROOT of the word (e.g. "height" -> root is "high/height"; "consideration" -> root is "consider").
@@ -93,18 +109,43 @@ Instructions:
 3. Include the input word itself in the appropriate category.
 4. Be exhaustive -- think of ALL derivatives even less common ones.
 5. Do NOT include true synonyms (different roots). Only include words sharing the same morphological root.
+6. Set originalWord to the exact lowercase input word.
 
 Example: for "height" you would include: height, heights, high, higher, highest, highly, highs, heighten, heightens, heightened, heightening, unhigh (if valid), on high, etc.
 
-Respond ONLY with this exact JSON structure, no markdown:
-{"groups":[{"category":"Nouns","words":["..."]},{"category":"Verbs","words":["..."]},{"category":"Adjectives","words":["..."]},{"category":"Adverbs","words":["..."]},{"category":"Prefixed / Negative Forms","words":["..."]}]}
-
 Only include a category if it has valid words. You may add extra categories for other derivative types.`;
+}
+
+async function generateTransform(trimmedWord: string) {
+  const response = await getClient().responses.parse({
+    model: OPENAI_MODEL,
+    instructions: buildInstructions(),
+    input: `Input word: "${trimmedWord}"`,
+    max_output_tokens: 4096,
+    reasoning: {
+      effort: "low",
+    },
+    text: {
+      format: responseFormat,
+    },
+  });
+
+  return response.output_parsed;
 }
 
 function shouldRetryTransform(err: unknown): boolean {
   if (err instanceof WordTransformError) {
     return err.retryable;
+  }
+
+  if (err instanceof APIError) {
+    return (
+      err.status === undefined ||
+      err.status === 408 ||
+      err.status === 409 ||
+      err.status === 429 ||
+      err.status >= 500
+    );
   }
 
   return true;
@@ -120,42 +161,45 @@ async function transformWordOnce(
     "Generating word transformations",
   );
 
-  const rawContent = await generateWithRetry(buildPrompt(trimmedWord));
+  const parsedResponse = await generateTransform(trimmedWord);
 
-  logger?.info({ rawContent, attempt }, "AI response received");
+  logger?.info(
+    { parsedResponse, attempt, model: OPENAI_MODEL },
+    "AI response received",
+  );
 
-  if (!rawContent) {
+  if (!parsedResponse) {
     logger?.error({ attempt }, "AI returned empty content");
     throw new WordTransformError(500, "AI returned an empty response.", {
       retryable: true,
     });
   }
 
-  let parsedJson: { groups?: { category: string; words: string[] }[] };
-  try {
-    parsedJson = JSON.parse(rawContent);
-  } catch {
-    logger?.error({ rawContent, attempt }, "Failed to parse AI response as JSON");
-    throw new WordTransformError(500, "Failed to parse AI response.", {
-      retryable: true,
-    });
-  }
-
-  const groups = (parsedJson.groups ?? []).filter(
+  const groups = parsedResponse.groups.filter(
     (group) => Array.isArray(group.words) && group.words.length > 0,
   );
 
   if (groups.length === 0) {
-    logger?.error({ rawContent, attempt }, "AI returned no word transformations");
-    throw new WordTransformError(500, "AI did not return any word transformations.", {
-      retryable: true,
-    });
+    logger?.error(
+      { parsedResponse, attempt },
+      "AI returned no word transformations",
+    );
+    throw new WordTransformError(
+      500,
+      "AI did not return any word transformations.",
+      {
+        retryable: true,
+      },
+    );
   }
 
   return TransformWordResponse.parse({ originalWord: trimmedWord, groups });
 }
 
-export async function transformWord(word: string, logger?: WordTransformLogger) {
+async function transformWordUncached(
+  word: string,
+  logger?: WordTransformLogger,
+): Promise<TransformWordResult> {
   const trimmedWord = word.trim().toLowerCase();
 
   if (!trimmedWord) {
@@ -179,4 +223,33 @@ export async function transformWord(word: string, logger?: WordTransformLogger) 
   }
 
   throw new Error("Word transformation failed unexpectedly.");
+}
+
+export async function transformWord(
+  word: string,
+  logger?: WordTransformLogger,
+): Promise<TransformWordResult> {
+  const trimmedWord = word.trim().toLowerCase();
+  const cached = getCachedTransform(trimmedWord);
+  if (cached) {
+    logger?.info({ word: trimmedWord }, "Serving cached word transformation");
+    return cached;
+  }
+
+  const existingTransform = inFlightTransforms.get(trimmedWord);
+  if (existingTransform) {
+    logger?.info({ word: trimmedWord }, "Reusing in-flight word transformation");
+    return existingTransform;
+  }
+
+  const transformPromise = transformWordUncached(trimmedWord, logger);
+  inFlightTransforms.set(trimmedWord, transformPromise);
+
+  try {
+    const result = await transformPromise;
+    cacheTransform(trimmedWord, result);
+    return result;
+  } finally {
+    inFlightTransforms.delete(trimmedWord);
+  }
 }
