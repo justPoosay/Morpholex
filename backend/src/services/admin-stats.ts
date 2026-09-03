@@ -1,4 +1,5 @@
 import wordFamilies from "../data/word-families.json";
+import { getSearchAnalytics, type SearchAnalytics } from "../db/search-events";
 import { transformWord } from "./transform-word";
 
 type WordFamilyIndex = {
@@ -39,29 +40,7 @@ export type AdminStats = {
     formsFound: number;
     groupsFound: number;
   }>;
-  analytics: {
-    enabled: boolean;
-    totals: {
-      searches: number | null;
-      visitors: number | null;
-      visitorsToday: number | null;
-      visitorsThisWeek: number | null;
-      averageResponseMs: number | null;
-      missingSearches: number | null;
-    };
-    recentSearches: Array<{
-      id: number;
-      query: string;
-      found: boolean;
-      resultCount: number;
-      responseMs: number | null;
-      createdAt: string;
-    }>;
-    topSearches: Array<{
-      query: string;
-      count: number;
-    }>;
-  };
+  analytics: SearchAnalytics;
   traffic: {
     collectedByApp: false;
     note: string;
@@ -108,19 +87,7 @@ export async function getAdminStats(): Promise<AdminStats> {
       entryCount: dictionary.metadata.entryCount,
     },
     checks,
-    analytics: {
-      enabled: false,
-      totals: {
-        searches: null,
-        visitors: null,
-        visitorsToday: null,
-        visitorsThisWeek: null,
-        averageResponseMs: null,
-        missingSearches: null,
-      },
-      recentSearches: [],
-      topSearches: [],
-    },
+    analytics: await getSearchAnalytics(),
     traffic: {
       collectedByApp: false,
       note: "Search analytics are not connected yet. The planned Postgres layer will store hashed visitor identifiers, not raw IP addresses.",

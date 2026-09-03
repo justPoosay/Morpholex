@@ -16,7 +16,8 @@
 - [x] Add a shared query safety ruleset before database writes.
 - [x] Add a Postgres `search_events` table and portable database layer.
 - [x] Record safe search events from the backend transform endpoint.
+- [x] Populate the admin panel with real search analytics from Postgres.
 
 ## To Do
 
-- [ ] Populate the admin panel with real search analytics from Postgres.
+- No open items right now.
