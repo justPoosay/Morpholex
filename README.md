@@ -12,7 +12,11 @@
 - [x] Smoke-test the Netlify deployment after the branch is deployed.
 - [x] Fix page layout on mobile devices and different window sizes.
 - [x] Add a small admin/dev stats page.
+- [x] Prepare the admin panel analytics layout for future search data.
 
 ## To Do
 
-- No open items right now.
+- [ ] Add a shared query safety ruleset before database writes.
+- [ ] Add a Postgres `search_events` table and portable database layer.
+- [ ] Record safe search events from the backend transform endpoint.
+- [ ] Populate the admin panel with real search analytics from Postgres.

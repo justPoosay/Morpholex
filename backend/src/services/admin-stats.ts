@@ -39,6 +39,29 @@ export type AdminStats = {
     formsFound: number;
     groupsFound: number;
   }>;
+  analytics: {
+    enabled: boolean;
+    totals: {
+      searches: number | null;
+      visitors: number | null;
+      visitorsToday: number | null;
+      visitorsThisWeek: number | null;
+      averageResponseMs: number | null;
+      missingSearches: number | null;
+    };
+    recentSearches: Array<{
+      id: number;
+      query: string;
+      found: boolean;
+      resultCount: number;
+      responseMs: number | null;
+      createdAt: string;
+    }>;
+    topSearches: Array<{
+      query: string;
+      count: number;
+    }>;
+  };
   traffic: {
     collectedByApp: false;
     note: string;
@@ -85,9 +108,22 @@ export async function getAdminStats(): Promise<AdminStats> {
       entryCount: dictionary.metadata.entryCount,
     },
     checks,
+    analytics: {
+      enabled: false,
+      totals: {
+        searches: null,
+        visitors: null,
+        visitorsToday: null,
+        visitorsThisWeek: null,
+        averageResponseMs: null,
+        missingSearches: null,
+      },
+      recentSearches: [],
+      topSearches: [],
+    },
     traffic: {
       collectedByApp: false,
-      note: "Use Netlify Analytics for general traffic. Morpholex is not collecting per-user analytics.",
+      note: "Search analytics are not connected yet. The planned Postgres layer will store hashed visitor identifiers, not raw IP addresses.",
     },
   };
 }

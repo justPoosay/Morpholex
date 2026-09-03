@@ -1,5 +1,19 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BarChart3, CheckCircle2, Database, Lock, RefreshCw, Server } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  ArrowLeft,
+  BarChart3,
+  CheckCircle2,
+  Clock,
+  Database,
+  Lock,
+  RefreshCw,
+  Search,
+  Server,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { Link } from "wouter";
 
 type AdminStats = {
@@ -27,6 +41,29 @@ type AdminStats = {
     formsFound: number;
     groupsFound: number;
   }>;
+  analytics: {
+    enabled: boolean;
+    totals: {
+      searches: number | null;
+      visitors: number | null;
+      visitorsToday: number | null;
+      visitorsThisWeek: number | null;
+      averageResponseMs: number | null;
+      missingSearches: number | null;
+    };
+    recentSearches: Array<{
+      id: number;
+      query: string;
+      found: boolean;
+      resultCount: number;
+      responseMs: number | null;
+      createdAt: string;
+    }>;
+    topSearches: Array<{
+      query: string;
+      count: number;
+    }>;
+  };
   traffic: {
     collectedByApp: false;
     note: string;
@@ -41,6 +78,17 @@ function formatNumber(value: number): string {
 
 function shortCommit(value: string | null): string {
   return value ? value.slice(0, 8) : "local";
+}
+
+function formatOptionalNumber(value: number | null, suffix = ""): string {
+  return value === null ? "Pending" : `${formatNumber(value)}${suffix}`;
+}
+
+function formatSearchDate(value: string): string {
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
 
 export default function Admin() {
@@ -177,7 +225,43 @@ export default function Admin() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Search size={16} />
+                  Searches
+                </div>
+                <p className="font-mono text-2xl text-foreground">
+                  {formatOptionalNumber(stats.analytics.totals.searches)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Users size={16} />
+                  Visitors
+                </div>
+                <p className="font-mono text-2xl text-foreground">
+                  {formatOptionalNumber(stats.analytics.totals.visitors)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Activity size={16} />
+                  Today
+                </div>
+                <p className="font-mono text-2xl text-foreground">
+                  {formatOptionalNumber(stats.analytics.totals.visitorsToday)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <TrendingUp size={16} />
+                  This Week
+                </div>
+                <p className="font-mono text-2xl text-foreground">
+                  {formatOptionalNumber(stats.analytics.totals.visitorsThisWeek)}
+                </p>
+              </div>
               <div className="rounded-lg border border-border bg-card p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
                   <Database size={16} />
@@ -194,11 +278,107 @@ export default function Admin() {
               </div>
               <div className="rounded-lg border border-border bg-card p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock size={16} />
+                  Avg Response
+                </div>
+                <p className="font-mono text-2xl text-foreground">
+                  {formatOptionalNumber(stats.analytics.totals.averageResponseMs, "ms")}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <AlertCircle size={16} />
+                  Missing
+                </div>
+                <p className="font-mono text-2xl text-foreground">
+                  {formatOptionalNumber(stats.analytics.totals.missingSearches)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 size={16} />
                   Checks
                 </div>
                 <p className="font-mono text-2xl text-foreground">{checksPassed}/{stats.checks.length}</p>
               </div>
+            </div>
+
+            {!stats.analytics.enabled && (
+              <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+                {stats.traffic.note}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)]">
+              <section className="min-w-0 space-y-3">
+                <h2 className="font-serif text-2xl text-foreground">Recent Searches</h2>
+                <div className="overflow-hidden rounded-lg border border-border bg-card">
+                  {stats.analytics.recentSearches.length === 0 ? (
+                    <div className="p-6 text-sm text-muted-foreground">
+                      No search events yet. This table will populate after the Postgres tracking layer is connected.
+                    </div>
+                  ) : (
+                    <div className="max-h-96 overflow-auto">
+                      <table className="w-full min-w-[42rem] text-left text-sm">
+                        <thead className="sticky top-0 bg-card text-xs uppercase tracking-wide text-muted-foreground">
+                          <tr className="border-b border-border">
+                            <th className="px-4 py-3 font-medium">Query</th>
+                            <th className="px-4 py-3 font-medium">Status</th>
+                            <th className="px-4 py-3 font-medium">Results</th>
+                            <th className="px-4 py-3 font-medium">Response</th>
+                            <th className="px-4 py-3 font-medium">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stats.analytics.recentSearches.map((searchEvent) => (
+                            <tr key={searchEvent.id} className="border-b border-border/60 last:border-0">
+                              <td className="px-4 py-3 font-mono text-foreground">{searchEvent.query}</td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {searchEvent.found ? "found" : "missing"}
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {formatNumber(searchEvent.resultCount)}
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {searchEvent.responseMs === null ? "n/a" : `${formatNumber(searchEvent.responseMs)}ms`}
+                              </td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {formatSearchDate(searchEvent.createdAt)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="min-w-0 space-y-3">
+                <h2 className="font-serif text-2xl text-foreground">Top Searches</h2>
+                <div className="rounded-lg border border-border bg-card p-4">
+                  {stats.analytics.topSearches.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Rankings will appear once search events are stored.
+                    </p>
+                  ) : (
+                    <ol className="space-y-3">
+                      {stats.analytics.topSearches.map((search, index) => (
+                        <li key={search.query} className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-sm text-foreground">
+                              {index + 1}. {search.query}
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                            {formatNumber(search.count)}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              </section>
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
