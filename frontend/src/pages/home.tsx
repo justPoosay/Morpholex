@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
 import { ApiError, useTransformWord } from "@/api";
+import { MorpholexLogo } from "@/components/morpholex-logo";
 import { useTheme } from "@/components/theme-provider";
 import {
   sanitizeWordQueryInput,
@@ -109,10 +110,7 @@ export default function Home() {
     <div className="min-h-[100dvh] overflow-x-hidden bg-background text-foreground transition-colors duration-300 font-sans selection:bg-primary/20 selection:text-primary">
       {/* Header / Nav */}
       <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6">
-        <div className="font-serif font-semibold text-lg tracking-tight text-primary flex items-center gap-0.5">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[#FF3C00] font-serif text-xs font-semibold text-white shadow-sm">M</span>
-          <span>orpholex</span>
-        </div>
+        <MorpholexLogo className="h-11 w-auto max-w-[220px] text-foreground sm:h-12 sm:max-w-[260px]" />
         <button
           onClick={toggleTheme}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
