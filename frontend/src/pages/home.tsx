@@ -110,7 +110,7 @@ export default function Home() {
     <div className="min-h-[100dvh] overflow-x-hidden bg-background text-foreground transition-colors duration-300 font-sans selection:bg-primary/20 selection:text-primary">
       {/* Header / Nav */}
       <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6">
-        <MorpholexLogo className="h-11 w-auto max-w-[220px] text-foreground sm:h-12 sm:max-w-[260px]" />
+        <MorpholexLogo className="h-14 w-auto max-w-[250px] text-foreground sm:h-16 sm:max-w-[320px]" />
         <button
           onClick={toggleTheme}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
