@@ -17,6 +17,7 @@
 - [x] Add a Postgres `search_events` table and portable database layer.
 - [x] Record safe search events from the backend transform endpoint.
 - [x] Populate the admin panel with real search analytics from Postgres.
+- [x] Improve admin analytics for debugging and remove obsolete lookup checks.
 
 ## To Do
 

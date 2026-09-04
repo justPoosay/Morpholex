@@ -1,6 +1,5 @@
 import wordFamilies from "../data/word-families.json";
 import { getSearchAnalytics, type SearchAnalytics } from "../db/search-events";
-import { transformWord } from "./transform-word";
 
 type WordFamilyIndex = {
   metadata: {
@@ -12,8 +11,6 @@ type WordFamilyIndex = {
 };
 
 const dictionary = wordFamilies as WordFamilyIndex;
-
-const CHECK_WORDS = ["long", "length", "high", "height", "wide", "width"];
 
 export type AdminStats = {
   app: {
@@ -34,15 +31,11 @@ export type AdminStats = {
     familyCount: number;
     entryCount: number;
   };
-  checks: Array<{
-    word: string;
-    status: "ok" | "missing";
-    formsFound: number;
-    groupsFound: number;
-  }>;
   analytics: SearchAnalytics;
-  traffic: {
-    collectedByApp: false;
+  tracking: {
+    databaseConfigured: boolean;
+    visitorHashingEnabled: boolean;
+    rawIpStored: false;
     note: string;
   };
 };
@@ -53,19 +46,7 @@ export function isAdminStatsAuthorized(token: string | null): boolean {
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-  const checks = await Promise.all(
-    CHECK_WORDS.map(async (word) => {
-      const result = await transformWord(word);
-      const formsFound = result.groups.reduce((count, group) => count + group.words.length, 0);
-
-      return {
-        word,
-        status: formsFound > 0 ? "ok" as const : "missing" as const,
-        formsFound,
-        groupsFound: result.groups.length,
-      };
-    }),
-  );
+  const analytics = await getSearchAnalytics();
 
   return {
     app: {
@@ -86,11 +67,14 @@ export async function getAdminStats(): Promise<AdminStats> {
       familyCount: dictionary.metadata.familyCount,
       entryCount: dictionary.metadata.entryCount,
     },
-    checks,
-    analytics: await getSearchAnalytics(),
-    traffic: {
-      collectedByApp: false,
-      note: "Search analytics are not connected yet. The planned Postgres layer will store hashed visitor identifiers, not raw IP addresses.",
+    analytics,
+    tracking: {
+      databaseConfigured: analytics.enabled,
+      visitorHashingEnabled: Boolean(process.env.ANALYTICS_SALT),
+      rawIpStored: false,
+      note: analytics.enabled
+        ? "Search analytics are stored in Postgres with hashed visitor identifiers only."
+        : "DATABASE_URL is not configured, so search analytics are not being stored.",
     },
   };
 }
