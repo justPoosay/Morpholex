@@ -26,7 +26,6 @@ without a Mac.
 | `Sources/Morpholex/MorpholexAPI.swift` | Client for the Morpholex backend |
 | `Sources/Morpholex/DictionaryAPI.swift` | Wiktionary definitions client |
 | `Sources/Morpholex/DefinitionSheet.swift` | The definition pop-up |
-| `Sources/Morpholex/Appearance.swift` | Follows the device's light/dark mode |
 | `Resources/AppIcon.png` | App icon (the lexical-tree logo) |
 | `Info.plist` | Extra Info.plist keys (landscape support) |
 | `xtool.yml` | Bundle ID, icon and Info.plist paths |

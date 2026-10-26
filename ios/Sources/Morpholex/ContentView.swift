@@ -3,8 +3,6 @@ import SwiftUI
 /// The search screen, rebuilt from frontend/src/pages/home.tsx.
 struct ContentView: View {
     @State private var model = SearchModel()
-    @Environment(Appearance.self) private var appearance
-    @Environment(\.colorScheme) private var scheme
     @FocusState private var searchFocused: Bool
     /// The word whose definition pop-up is open.
     @State private var definitionWord: DefinitionWord?
@@ -14,7 +12,9 @@ struct ContentView: View {
         var id: String { word }
     }
 
-    private var palette: Palette { Palette(scheme) }
+    @Environment(Theme.self) private var theme
+
+    private var palette: Palette { theme.palette }
 
     var body: some View {
         GeometryReader { proxy in
@@ -88,18 +88,6 @@ struct ContentView: View {
             .buttonStyle(.plain)
 
             Spacer()
-
-            Button {
-                appearance.override = scheme == .dark ? .light : .dark
-            } label: {
-                Image(systemName: scheme == .dark ? "sun.max" : "moon")
-                    .font(.system(size: 17))
-                    .foregroundStyle(palette.mutedForeground)
-                    .frame(width: 36, height: 36)
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Toggle theme")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)

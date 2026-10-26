@@ -2,10 +2,10 @@ import SwiftUI
 
 /// The lexical-tree wordmark from frontend/src/components/morpholex-logo.tsx.
 struct MorpholexLogo: View {
-    @Environment(\.colorScheme) private var scheme
+    @Environment(Theme.self) private var theme
 
     var body: some View {
-        let palette = Palette(scheme)
+        let palette = theme.palette
         HStack(spacing: 10) {
             MorpholexIcon(foreground: palette.foreground, background: palette.background)
                 .frame(width: 40, height: 40)
@@ -24,47 +24,63 @@ struct MorpholexLogo: View {
     }
 }
 
+/// The icon is drawn from plain shapes (not a Canvas) so its colors can fade between modes.
 struct MorpholexIcon: View {
     let foreground: Color
     let background: Color
 
     var body: some View {
-        Canvas { context, size in
-            // The web SVG draws the icon on an 80×80 grid.
-            let scale = size.width / 80
-            func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * scale, y: y * scale) }
-
-            let tile = CGRect(x: 2 * scale, y: 2 * scale, width: 76 * scale, height: 76 * scale)
-            context.fill(Path(roundedRect: tile, cornerRadius: 16 * scale), with: .color(foreground))
-
-            var trunk = Path()
-            trunk.move(to: point(40, 59))
-            trunk.addLine(to: point(40, 21))
-            context.stroke(trunk, with: .color(background), style: StrokeStyle(lineWidth: 5 * scale, lineCap: .round))
-
-            var branches = Path()
-            for (start, end) in [
-                (point(40, 39), point(24, 28)),
-                (point(40, 39), point(56, 28)),
-                (point(40, 50), point(23, 60)),
-                (point(40, 50), point(58, 60)),
-            ] {
-                branches.move(to: start)
-                branches.addLine(to: end)
-            }
-            context.stroke(branches, with: .color(background), style: StrokeStyle(lineWidth: 4 * scale, lineCap: .round))
-
-            let leaves: [(CGPoint, UInt32)] = [
-                (point(24, 28), 0xD98545),
-                (point(56, 28), 0x4E9A9A),
-                (point(23, 60), 0xB43C55),
-                (point(58, 60), 0xD98545),
-            ]
-            for (center, hex) in leaves {
-                let radius = 5.5 * scale
-                let circle = CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
-                context.fill(Path(ellipseIn: circle), with: .color(Color(hex: hex)))
-            }
+        ZStack {
+            IconTile().fill(foreground)
+            IconLine(from: (40, 59), to: (40, 21), width: 5).fill(background)
+            IconLine(from: (40, 39), to: (24, 28), width: 4).fill(background)
+            IconLine(from: (40, 39), to: (56, 28), width: 4).fill(background)
+            IconLine(from: (40, 50), to: (23, 60), width: 4).fill(background)
+            IconLine(from: (40, 50), to: (58, 60), width: 4).fill(background)
+            IconLeaf(center: (24, 28)).fill(Color(hex: 0xD98545))
+            IconLeaf(center: (56, 28)).fill(Color(hex: 0x4E9A9A))
+            IconLeaf(center: (23, 60)).fill(Color(hex: 0xB43C55))
+            IconLeaf(center: (58, 60)).fill(Color(hex: 0xD98545))
         }
+    }
+}
+
+// The web SVG draws the icon on an 80×80 grid; these shapes scale it to whatever size they get.
+
+private struct IconTile: Shape {
+    func path(in rect: CGRect) -> Path {
+        let s = rect.width / 80
+        let tile = CGRect(x: rect.minX + 2 * s, y: rect.minY + 2 * s, width: 76 * s, height: 76 * s)
+        return Path(roundedRect: tile, cornerRadius: 16 * s)
+    }
+}
+
+private struct IconLine: Shape {
+    let from: (CGFloat, CGFloat)
+    let to: (CGFloat, CGFloat)
+    let width: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let s = rect.width / 80
+        var line = Path()
+        line.move(to: CGPoint(x: rect.minX + from.0 * s, y: rect.minY + from.1 * s))
+        line.addLine(to: CGPoint(x: rect.minX + to.0 * s, y: rect.minY + to.1 * s))
+        return line.strokedPath(StrokeStyle(lineWidth: width * s, lineCap: .round))
+    }
+}
+
+private struct IconLeaf: Shape {
+    let center: (CGFloat, CGFloat)
+
+    func path(in rect: CGRect) -> Path {
+        let s = rect.width / 80
+        let radius = 5.5 * s
+        let circle = CGRect(
+            x: rect.minX + center.0 * s - radius,
+            y: rect.minY + center.1 * s - radius,
+            width: radius * 2,
+            height: radius * 2
+        )
+        return Path(ellipseIn: circle)
     }
 }

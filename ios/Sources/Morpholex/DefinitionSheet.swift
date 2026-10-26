@@ -9,7 +9,7 @@ struct DefinitionSheet: View {
     @State private var word: String
     @State private var state = LoadState.loading
     @State private var expandedSections: Set<Int> = []
-    @Environment(\.colorScheme) private var scheme
+    @Environment(Theme.self) private var theme
     @Environment(\.dismiss) private var dismiss
 
     private enum LoadState {
@@ -27,7 +27,7 @@ struct DefinitionSheet: View {
         self.onShowWordFamily = onShowWordFamily
     }
 
-    private var palette: Palette { Palette(scheme) }
+    private var palette: Palette { theme.palette }
 
     var body: some View {
         ScrollView {

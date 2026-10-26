@@ -1,4 +1,8 @@
+import Observation
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// The website's color tokens from frontend/src/index.css (HSL), for light and dark mode.
 struct Palette {
@@ -14,53 +18,104 @@ struct Palette {
 
     init(_ scheme: ColorScheme) {
         if scheme == .dark {
-            background = .hsl(220, 25, 10)
-            foreground = .hsl(40, 20, 90)
-            card = .hsl(220, 25, 13)
-            border = .hsl(220, 20, 20)
-            primary = .hsl(345, 35, 55)
-            primaryForeground = .hsl(220, 25, 10)
-            muted = .hsl(220, 20, 16)
-            mutedForeground = .hsl(40, 10, 60)
+            background = HSL(220, 25, 10).color
+            foreground = HSL(40, 20, 90).color
+            card = HSL(220, 25, 13).color
+            border = HSL(220, 20, 20).color
+            primary = HSL(345, 35, 55).color
+            primaryForeground = HSL(220, 25, 10).color
+            muted = HSL(220, 20, 16).color
+            mutedForeground = HSL(40, 10, 60).color
             // Lighter than the website's dark value so the error text stays readable.
-            destructive = .hsl(0, 72, 65)
+            destructive = HSL(0, 72, 65).color
         } else {
-            background = .hsl(40, 20, 96)
-            foreground = .hsl(220, 20, 15)
-            card = .hsl(40, 20, 98)
-            border = .hsl(40, 15, 85)
-            primary = .hsl(345, 40, 40)
-            primaryForeground = .hsl(40, 20, 98)
-            muted = .hsl(40, 15, 90)
-            mutedForeground = .hsl(220, 15, 45)
-            destructive = .hsl(0, 84, 60)
+            background = HSL(40, 20, 96).color
+            foreground = HSL(220, 20, 15).color
+            card = HSL(40, 20, 98).color
+            border = HSL(40, 15, 85).color
+            primary = HSL(345, 40, 40).color
+            primaryForeground = HSL(40, 20, 98).color
+            muted = HSL(40, 15, 90).color
+            mutedForeground = HSL(220, 15, 45).color
+            destructive = HSL(0, 84, 60).color
         }
     }
 }
 
-extension Color {
-    /// Hue in degrees, saturation and lightness in percent, matching the CSS `hsl()` values.
-    static func hsl(_ hue: Double, _ saturation: Double, _ lightness: Double) -> Color {
+/// The color scheme the app is drawn in. It follows the device setting, but changes through
+/// `withAnimation` so every color fades smoothly instead of snapping.
+@MainActor
+@Observable
+final class Theme {
+    var scheme: ColorScheme
+    var palette: Palette { Palette(scheme) }
+
+    init() {
+        scheme = Self.deviceScheme()
+    }
+
+    /// The device's current setting, so the very first frame already has the right colors.
+    private static func deviceScheme() -> ColorScheme {
+        #if canImport(UIKit)
+        UIScreen.main.traitCollection.userInterfaceStyle == .dark ? .dark : .light
+        #else
+        .light
+        #endif
+    }
+}
+
+/// Wraps the app and fades its colors whenever the device switches between light and dark.
+struct ThemedRoot: View {
+    let theme: Theme
+    @Environment(\.colorScheme) private var deviceScheme
+
+    var body: some View {
+        ContentView()
+            .environment(theme)
+            .onAppear { theme.scheme = deviceScheme }
+            .onChange(of: deviceScheme) { _, newScheme in
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    theme.scheme = newScheme
+                }
+            }
+    }
+}
+
+/// Hue in degrees, saturation and lightness in percent, matching the CSS `hsl()` values.
+struct HSL {
+    let hue: Double
+    let saturation: Double
+    let lightness: Double
+
+    init(_ hue: Double, _ saturation: Double, _ lightness: Double) {
+        self.hue = hue
+        self.saturation = saturation
+        self.lightness = lightness
+    }
+
+    var color: Color {
         let s = saturation / 100
         let l = lightness / 100
         let chroma = (1 - abs(2 * l - 1)) * s
         let sector = hue / 60
         let x = chroma * (1 - abs(sector.truncatingRemainder(dividingBy: 2) - 1))
 
-        let rgb: (Double, Double, Double)
+        let base: (Double, Double, Double)
         switch sector {
-        case ..<1: rgb = (chroma, x, 0)
-        case ..<2: rgb = (x, chroma, 0)
-        case ..<3: rgb = (0, chroma, x)
-        case ..<4: rgb = (0, x, chroma)
-        case ..<5: rgb = (x, 0, chroma)
-        default: rgb = (chroma, 0, x)
+        case ..<1: base = (chroma, x, 0)
+        case ..<2: base = (x, chroma, 0)
+        case ..<3: base = (0, chroma, x)
+        case ..<4: base = (0, x, chroma)
+        case ..<5: base = (x, 0, chroma)
+        default: base = (chroma, 0, x)
         }
 
         let m = l - chroma / 2
-        return Color(red: rgb.0 + m, green: rgb.1 + m, blue: rgb.2 + m)
+        return Color(red: base.0 + m, green: base.1 + m, blue: base.2 + m)
     }
+}
 
+extension Color {
     init(hex: UInt32) {
         self.init(
             red: Double((hex >> 16) & 0xFF) / 255,
