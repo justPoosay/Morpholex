@@ -6,4 +6,6 @@ enum Preferences {
     static let voiceKey = "voiceIdentifier"
     /// "system", "light" or "dark" (see AppearanceMode).
     static let appearanceKey = "appearance"
+    /// Whether taps and search results vibrate. On unless the user turns it off.
+    static let hapticsKey = "hapticsEnabled"
 }

@@ -5,6 +5,7 @@ import SwiftUI
 struct SettingsSheet: View {
     @AppStorage(Preferences.appearanceKey) private var appearanceRaw = AppearanceMode.system.rawValue
     @AppStorage(Preferences.voiceKey) private var voiceIdentifier = ""
+    @AppStorage(Preferences.hapticsKey) private var hapticsEnabled = true
     @State private var groups: [VoiceGroup] = []
     @State private var pronouncer = Pronouncer()
     @Environment(Theme.self) private var theme
@@ -21,6 +22,7 @@ struct SettingsSheet: View {
                 header
                 appearanceSection
                 voiceSection
+                feedbackSection
             }
             .padding(24)
         }
@@ -165,6 +167,35 @@ struct SettingsSheet: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    // MARK: - Feedback
+
+    private var feedbackSection: some View {
+        let shape = RoundedRectangle(cornerRadius: 10)
+
+        return VStack(alignment: .leading, spacing: 16) {
+            sectionTitle("Feedback")
+
+            Toggle(isOn: $hapticsEnabled) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Haptic feedback")
+                        .foregroundStyle(palette.foreground)
+                    Text("Light vibrations when you tap words and finish searches.")
+                        .font(.footnote)
+                        .foregroundStyle(palette.mutedForeground)
+                }
+            }
+            .tint(palette.primary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(palette.background, in: shape)
+            .overlay(shape.stroke(palette.border.opacity(0.8), lineWidth: 1))
+            // A tap confirms the switch was turned on (turning it off stays quiet).
+            .onChange(of: hapticsEnabled) { _, isOn in
+                if isOn { Haptics.tap() }
+            }
+        }
     }
 
     private func sectionTitle(_ title: String) -> some View {
