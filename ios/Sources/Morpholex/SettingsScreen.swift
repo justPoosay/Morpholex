@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// The settings screen, which slides in when the gear button in the header is tapped.
-/// It lists the options; each one opens its own screen. To add an option, make a new
+/// It lists the options. Options with more to them open their own screen; simple on/off
+/// switches sit directly in the list. To add an option with its own screen, make a new
 /// `...SettingsView` built on `SettingsPage` and add a `row` for it below.
 struct SettingsScreen: View {
     let search: SearchModel
@@ -21,15 +22,33 @@ struct SettingsScreen: View {
             row("Voice", symbol: "speaker.wave.2", value: VoiceCatalog.name(for: voiceIdentifier)) {
                 VoiceSettingsView()
             }
-            row("Feedback", symbol: "iphone.radiowaves.left.and.right", value: hapticsEnabled ? "On" : "Off") {
-                FeedbackSettingsView()
-            }
+            hapticsRow
             row("History", symbol: "clock.arrow.circlepath", value: search.history.isEmpty ? "Empty" : "\(search.history.count)") {
                 HistorySettingsView(search: search)
             }
             row("About", symbol: "info.circle", value: AboutView.versionText) {
                 AboutView()
             }
+        }
+    }
+
+    private var hapticsRow: some View {
+        Toggle(isOn: $hapticsEnabled) {
+            HStack(spacing: 12) {
+                Image(systemName: "iphone.radiowaves.left.and.right")
+                    .font(.system(size: 17))
+                    .foregroundStyle(palette.primary)
+                    .frame(width: 26)
+
+                Text("Haptic feedback")
+                    .foregroundStyle(palette.foreground)
+            }
+        }
+        .tint(palette.primary)
+        .settingsCard(palette)
+        // A tap confirms the switch was turned on (turning it off stays quiet).
+        .onChange(of: hapticsEnabled) { _, isOn in
+            if isOn { Haptics.tap() }
         }
     }
 
