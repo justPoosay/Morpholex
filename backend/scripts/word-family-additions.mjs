@@ -213,4 +213,13 @@ export const ADDITIONS = [
   ["vary", "varied", "invariably"],
   ["waste", "wasteful", "wastefully", "wasteland", "wastage"],
   ["wonder", "wonderful", "wonderfully", "wondrous", "wondrously"],
+
+  // Found missing when checking the quiz exercises (ios/scripts/check-quiz.mjs)
+  ["impulse", "impulsive", "impulsively", "impulsiveness", "impulsivity"],
+  ["attend", "attention", "inattention", "attentive", "inattentive", "attentively", "inattentively", "attendance"],
+  ["doubt", "doubtful", "doubtfully", "doubtless", "doubtlessly", "undoubted", "undoubtedly"],
+  ["use", "useless", "uselessly", "uselessness"],
+  ["company", "companion", "companionship", "companionable", "accompany", "accompaniment"],
+  ["judge", "judgement", "judgment", "misjudge", "misjudged", "misjudgement", "misjudgment"],
+  ["perfect", "imperfect", "imperfection", "perfection", "perfectly", "imperfectly", "perfectionist"],
 ];
