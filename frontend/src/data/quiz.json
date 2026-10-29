@@ -1,0 +1,172 @@
+[
+  {
+    "id": "ruins",
+    "title": "In Praise of Ruins",
+    "level": "C2",
+    "example": { "base": "FASCINATE", "answer": "fascination" },
+    "text": "Few sights exert such a {0} over the imagination as a ruin. Perhaps this is because the builders of such monuments set out to create something {1}, only for time to prove them wrong. Standing among broken columns, visitors are confronted with the {2} of even the grandest human ambitions, and many find the experience both humbling and {3}.\n\nYet ruins are far from silent. Their inscriptions, which are often {4} and incomplete, still seem to address us across the centuries. {5} are frequently the first to admit how little they can be sure of, and there is inevitably a great deal of {6} about who built a site, and why. Rather than a flaw, this is part of the appeal: a ruin invites us to complete it in our own minds. For that reason, {7} restoration can do real harm, replacing mystery with tidy certainty. Ruins are, {8}, the most honest of all buildings, since they make no pretence of being anything other than what time has left of them.",
+    "gaps": [
+      { "base": "PERISH", "answers": ["imperishable"], "change": "negative prefix + suffix" },
+      { "base": "TRANSIENT", "answers": ["transience", "transiency"], "change": "adjective → noun" },
+      { "base": "SETTLE", "answers": ["unsettling"], "change": "negative prefix + -ing" },
+      { "base": "ENIGMA", "answers": ["enigmatic"], "change": "noun → adjective" },
+      { "base": "ARCHAEOLOGY", "answers": ["archaeologists", "archeologists"], "change": "subject → people, plural" },
+      { "base": "SPECULATE", "answers": ["speculation"], "change": "verb → noun" },
+      { "base": "INTRUDE", "answers": ["intrusive"], "change": "verb → adjective" },
+      { "base": "ARGUE", "answers": ["arguably"], "change": "verb → adverb" }
+    ]
+  },
+  {
+    "id": "letters",
+    "title": "The Slow Death of the Handwritten Letter",
+    "level": "C2",
+    "example": { "base": "PLEASE", "answer": "pleasure" },
+    "text": "Receiving a handwritten letter has become a rare {0}. In an age of instant messaging, the idea of composing a message by hand, sealing it and waiting days for a reply seems almost {1} to many young people. Few of us any longer have the {2} to wait that long. An email, after all, can be dashed off {3} and regretted at leisure, whereas a letter forces the writer to think before committing words to paper.\n\nA letter is also a lasting {4}: it can be reread, folded and slipped into a drawer, where it may lie {5} for decades. {6} value such documents precisely because they are so {7}, revealing the private doubts and enthusiasms of their writers. It would be a great loss if the complete {8} of the letter deprived future generations of such intimate evidence.",
+    "gaps": [
+      { "base": "THINK", "answers": ["unthinkable"], "change": "negative prefix + suffix" },
+      { "base": "PATIENT", "answers": ["patience"], "change": "adjective → noun" },
+      { "base": "IMPULSE", "answers": ["impulsively"], "change": "noun → adverb" },
+      { "base": "POSSESS", "answers": ["possession"], "change": "verb → noun" },
+      { "base": "DISTURB", "answers": ["undisturbed"], "change": "negative prefix + -ed" },
+      { "base": "HISTORY", "answers": ["historians"], "change": "subject → people, plural" },
+      { "base": "PERSON", "answers": ["personal"], "change": "noun → adjective" },
+      { "base": "DISAPPEAR", "answers": ["disappearance"], "change": "verb → noun" }
+    ]
+  },
+  {
+    "id": "listening",
+    "title": "Listening in an Age of Noise",
+    "level": "C2",
+    "example": { "base": "PERSIST", "answer": "persistence" },
+    "text": "Few of us are asked to reflect on how much of modern life is spent not listening. Offices, streets and screens compete for our attention with such {0} that silence has become a luxury. The result is a kind of collective {1}, in which people hear words without absorbing their meaning. Psychologists describe real listening as an {2} activity, since it requires us to set aside our own concerns, and few conversations are {3} these days.\n\nYet the rewards can be considerable. Those who listen well earn a {4} for wisdom, and their {5} alone can calm a tense room. Interviewers, therapists and diplomats cultivate the skill deliberately, though they would be the first to admit that it does not come {6} to most people. It is, moreover, {7} hard to teach, because the only evidence that someone has listened is what they say next. Perhaps the best advice is {8} simple: stop talking.",
+    "gaps": [
+      { "base": "ATTEND", "answers": ["inattention"], "change": "negative prefix + noun" },
+      { "base": "EXHAUST", "answers": ["exhausting"], "change": "verb → adjective" },
+      { "base": "INTERRUPT", "answers": ["uninterrupted"], "change": "negative prefix + -ed" },
+      { "base": "REPUTE", "answers": ["reputation"], "change": "verb → noun" },
+      { "base": "PRESENT", "answers": ["presence"], "change": "adjective → noun" },
+      { "base": "NATURE", "answers": ["naturally"], "change": "noun → adverb" },
+      { "base": "MEASURE", "answers": ["immeasurably"], "change": "negative prefix + suffixes" },
+      { "base": "DECEPTION", "answers": ["deceptively"], "change": "noun → adverb" }
+    ]
+  },
+  {
+    "id": "sleep",
+    "title": "The Mystery of Sleep",
+    "level": "C2",
+    "example": { "base": "SURPRISE", "answer": "surprisingly" },
+    "text": "{0}, scientists still cannot say for certain why we sleep. We spend about a third of our lives unconscious, yet the {1} offered so far remain incomplete. Some researchers believe that sleep allows the brain to clear away waste; others stress its role in the {2} of memories. What is {3}, however, is the damage done by its absence.\n\nEven a few nights of {4} rest can impair judgement, weaken the immune system and make people {5} irritable. Modern {6} has a good deal to answer for, since artificial light, shift work and constant connectivity all encourage us to treat sleep as a {7} luxury rather than a basic need. Doctors are {8} concerned that sleeping less is becoming the norm, and they urge patients to protect their nights as carefully as their days.",
+    "gaps": [
+      { "base": "EXPLAIN", "answers": ["explanations"], "change": "verb → noun, plural" },
+      { "base": "CONSOLIDATE", "answers": ["consolidation"], "change": "verb → noun" },
+      { "base": "DISPUTE", "answers": ["indisputable"], "change": "negative prefix + suffix" },
+      { "base": "SUFFICIENT", "answers": ["insufficient"], "change": "negative prefix" },
+      { "base": "USUAL", "answers": ["unusually"], "change": "negative prefix + adverb" },
+      { "base": "CIVILISE", "answers": ["civilisation", "civilization"], "change": "verb → noun" },
+      { "base": "DISPENSE", "answers": ["dispensable"], "change": "verb → adjective" },
+      { "base": "INCREASE", "answers": ["increasingly"], "change": "verb → adverb" }
+    ]
+  },
+  {
+    "id": "translation",
+    "title": "Lost in Translation",
+    "level": "C2",
+    "example": { "base": "TRANSLATE", "answer": "translator" },
+    "text": "A good {0} must be part linguist, part diplomat. The task is rarely a matter of finding equivalent words; it is a question of conveying tone, rhythm and the cultural {1} that words carry but that have no neat counterpart in another language. Poetry presents the most {2} challenge, since sound and meaning are so tightly bound together.\n\nSome words are held to be {3} altogether, such as the Portuguese word saudade, a longing for something absent. Yet this claim is often {4}: given enough space, a skilled writer can explain almost any concept. What is lost is not {5} but economy. Machine translation has seen remarkable {6} in recent years and, {7}, its output is now good enough for everyday purposes. Nevertheless, few literary translators expect to be replaced, for they know that the best translations are acts of {8}.",
+    "gaps": [
+      { "base": "ASSOCIATE", "answers": ["associations"], "change": "verb → noun, plural" },
+      { "base": "DAUNT", "answers": ["daunting"], "change": "verb → adjective" },
+      { "base": "TRANSLATE", "answers": ["untranslatable"], "change": "negative prefix + suffix" },
+      { "base": "EXAGGERATE", "answers": ["exaggerated"], "change": "verb → adjective" },
+      { "base": "MEAN", "answers": ["meaning"], "change": "verb → noun" },
+      { "base": "IMPROVE", "answers": ["improvements", "improvement"], "change": "verb → noun" },
+      { "base": "DOUBT", "answers": ["undoubtedly", "doubtless", "doubtlessly"], "change": "noun → adverb" },
+      { "base": "CREATE", "answers": ["creation", "creativity"], "change": "verb → noun" }
+    ]
+  },
+  {
+    "id": "cities",
+    "title": "Cities That Breathe",
+    "level": "C2",
+    "example": { "base": "DENSE", "answer": "density" },
+    "text": "The {0} of modern cities leaves little room for greenery, and planners are under growing pressure to find {1} solutions. Rooftop gardens, tree-lined boulevards and restored riverbanks are no longer regarded as {2} extras but as essential infrastructure. Trees cool the air, absorb pollution and soften the {3} of concrete, while wetlands protect neighbourhoods from flooding.\n\nThe benefits are not only {4}. Studies suggest that residents of greener districts report {5} higher levels of wellbeing. Critics point out, however, that such improvements tend to push up property prices, a {6} that can force out many of the very {7} they were meant to help. Planners are aware of the risk, and some now make {8} housing a condition of approval.",
+    "gaps": [
+      { "base": "INVENT", "answers": ["inventive"], "change": "verb → adjective" },
+      { "base": "NECESSARY", "answers": ["unnecessary"], "change": "negative prefix" },
+      { "base": "SEVERE", "answers": ["severity"], "change": "adjective → noun" },
+      { "base": "ENVIRONMENT", "answers": ["environmental"], "change": "noun → adjective" },
+      { "base": "SIGNIFY", "answers": ["significantly"], "change": "verb → adverb" },
+      { "base": "DEVELOP", "answers": ["development"], "change": "verb → noun" },
+      { "base": "COMMUNITY", "answers": ["communities"], "change": "noun, plural (spelling change)" },
+      { "base": "AFFORD", "answers": ["affordable"], "change": "verb → adjective" }
+    ]
+  },
+  {
+    "id": "marathon",
+    "title": "The Marathon Mind",
+    "level": "C2",
+    "example": { "base": "ENDURE", "answer": "endurance" },
+    "text": "Long-distance running demands extraordinary physical {0}, yet those who take up the sport often find that the greater test lies in the mind. Somewhere around the twentieth mile the body's reserves run low, and even the most {1} runners begin to doubt themselves. Sports psychologists therefore teach athletes to divide the distance into {2} stages and to replace {3} thoughts with simple, concrete goals.\n\nThe technique works because it turns attention away from {4} and towards the next step. Some runners insist that the pain is {5} and learn to accept it; others take a more {6} approach, keeping detailed records of every session. Whatever method they choose, crossing the finish line brings a {7} that few other experiences can match. It is hardly {8}, then, that so many return for another race.",
+    "gaps": [
+      { "base": "EXPERIENCE", "answers": ["experienced"], "change": "noun → adjective" },
+      { "base": "MANAGE", "answers": ["manageable"], "change": "verb → adjective" },
+      { "base": "DESTROY", "answers": ["destructive"], "change": "verb → adjective, spelling change" },
+      { "base": "COMFORT", "answers": ["discomfort"], "change": "negative prefix" },
+      { "base": "AVOID", "answers": ["unavoidable"], "change": "negative prefix + suffix" },
+      { "base": "ANALYSE", "answers": ["analytical", "analytic"], "change": "verb → adjective, spelling change" },
+      { "base": "SATISFY", "answers": ["satisfaction"], "change": "verb → noun, spelling change" },
+      { "base": "SURPRISE", "answers": ["surprising"], "change": "verb → adjective" }
+    ]
+  },
+  {
+    "id": "libraries",
+    "title": "Libraries After the Internet",
+    "level": "C2",
+    "example": { "base": "CONVENIENT", "answer": "convenience" },
+    "text": "Many predicted that the {0} of online search would render public libraries {1}, yet the opposite seems to be happening in several countries. Libraries are enjoying something of a {2}, and visitor numbers have held steady. Librarians attribute this to the fact that a library offers more than books: it provides a {3} space, free of charge, for those who are {4}, elderly or simply in need of {5}.\n\nStaff are increasingly asked to act as {6} on everything from benefits to job applications. Funding, however, remains {7}, and campaigners warn that closing a branch to save money would amount to a serious {8}.",
+    "gaps": [
+      { "base": "USE", "answers": ["useless"], "change": "noun → adjective" },
+      { "base": "REVIVE", "answers": ["revival"], "change": "verb → noun" },
+      { "base": "WELCOME", "answers": ["welcoming"], "change": "verb → adjective" },
+      { "base": "EMPLOY", "answers": ["unemployed"], "change": "negative prefix + -ed" },
+      { "base": "COMPANY", "answers": ["companionship"], "change": "noun → noun, spelling change" },
+      { "base": "ADVISE", "answers": ["advisers", "advisors"], "change": "verb → people, plural" },
+      { "base": "CERTAIN", "answers": ["uncertain"], "change": "negative prefix" },
+      { "base": "MISJUDGE", "answers": ["misjudgement", "misjudgment"], "change": "verb → noun" }
+    ]
+  },
+  {
+    "id": "ocean",
+    "title": "Mapping the Deep Ocean",
+    "level": "C2",
+    "example": { "base": "EXPLORE", "answer": "exploration" },
+    "text": "We know more about the surface of the Moon than we do about the ocean floor. Deep-sea {0} is hampered by crushing pressure, total darkness and enormous cost. Even so, {1} have long suspected that the abyss hides a rich variety of life, and recent expeditions have proved them right. The creatures found there are {2} diverse, and many have evolved remarkable {3} to a world without sunlight.\n\nUnderstanding how they manage their {4} in such conditions could prove {5} to medicine and engineering alike. Yet the prospect of mining the seabed has raised fears of commercial {6} before the ecosystem is even understood. Environmentalists argue that stricter {7} are urgently needed, and that mining should wait until the risks are better known, since the damage may prove {8}.",
+    "gaps": [
+      { "base": "SCIENCE", "answers": ["scientists"], "change": "subject → people, plural" },
+      { "base": "ASTONISH", "answers": ["astonishingly"], "change": "verb → adverb" },
+      { "base": "ADAPT", "answers": ["adaptations"], "change": "verb → noun, plural" },
+      { "base": "SURVIVE", "answers": ["survival"], "change": "verb → noun" },
+      { "base": "BENEFIT", "answers": ["beneficial"], "change": "noun → adjective" },
+      { "base": "EXPLOIT", "answers": ["exploitation"], "change": "verb → noun" },
+      { "base": "REGULATE", "answers": ["regulations"], "change": "verb → noun, plural" },
+      { "base": "REVERSE", "answers": ["irreversible"], "change": "negative prefix + suffix" }
+    ]
+  },
+  {
+    "id": "unfinished",
+    "title": "The Appeal of the Unfinished",
+    "level": "C2",
+    "example": { "base": "MEMORY", "answer": "memorable" },
+    "text": "Few works of art are as {0} as those their creators never completed. Michelangelo's half-carved figures seem to struggle out of the marble, and Schubert's 'Unfinished' Symphony remains among his most {1} pieces. Part of the appeal lies in the sense of {2}: the unfinished form is {3}, hinting at what might have been and inviting endless {4}.\n\nSome scholars point out, however, that few artists abandon a work {5}; most are simply overtaken by events, or by death. The Sagrada Família, still unfinished after more than a century, shows how {6} projects can outlive their creators, and how {7} the results can be when each generation adds its own ideas. Perhaps that is why the {8} of such works, far from disappointing us, makes them feel alive.",
+    "gaps": [
+      { "base": "CELEBRATE", "answers": ["celebrated"], "change": "verb → adjective" },
+      { "base": "POSSIBLE", "answers": ["possibility"], "change": "adjective → noun" },
+      { "base": "SUGGEST", "answers": ["suggestive"], "change": "verb → adjective" },
+      { "base": "INTERPRET", "answers": ["interpretations"], "change": "verb → noun, plural" },
+      { "base": "DELIBERATE", "answers": ["deliberately"], "change": "adjective → adverb" },
+      { "base": "AMBITION", "answers": ["ambitious"], "change": "noun → adjective" },
+      { "base": "PREDICT", "answers": ["unpredictable"], "change": "negative prefix + suffix" },
+      { "base": "PERFECT", "answers": ["imperfection"], "change": "negative prefix + noun" }
+    ]
+  }
+]
