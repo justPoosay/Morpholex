@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation, useSearch } from "wouter";
 import { Search, Loader2, History, ArrowRight } from "lucide-react";
 import { ApiError, useTransformWord } from "@/api";
 import { AppHeader } from "@/components/app-header";
@@ -8,9 +9,7 @@ import {
   WORD_QUERY_MAX_LENGTH,
   WORD_QUERY_RULE_MESSAGE,
 } from "@/lib/word-query";
-// Definition lookup is disabled for now. Keep these here for a future restore.
-// import { useWordDefinition } from "@/hooks/use-word-definition";
-// import { WordDefinitionDialog } from "@/components/word-definition-dialog";
+import { WordChip } from "@/components/word-chip";
 
 const RETRYABLE_API_STATUSES = new Set([500, 502, 503, 504]);
 
@@ -36,7 +35,6 @@ export default function Home() {
     },
   });
   const inputRef = useRef<HTMLInputElement>(null);
-  // const wordDef = useWordDefinition();
 
   // Load history on mount
   useEffect(() => {
@@ -74,6 +72,18 @@ export default function Home() {
       }
     });
   };
+
+  // /?q=word searches that word; "Show word family" in the definition pop-up and the word menu link here.
+  const urlSearch = useSearch();
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    const requested = new URLSearchParams(urlSearch).get("q");
+    if (!requested) return;
+    handleSearch(requested);
+    navigate("/", { replace: true });
+    // Only the address matters here; handleSearch is recreated on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch]);
 
   const handleSearchInputChange = (value: string) => {
     const sanitized = sanitizeWordQueryInput(value);
@@ -170,14 +180,13 @@ export default function Home() {
                 <History size={12} /> Recent
               </div>
               {history.map((h, i) => (
-                <button
+                <WordChip
                   key={`${h}-${i}`}
+                  word={h}
+                  variant="pill"
                   onClick={() => handleSearch(h)}
-                  className="max-w-full rounded-full border border-border/40 bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                  data-testid={`button-history-${h}`}
-                >
-                  {h}
-                </button>
+                  testId={`button-history-${h}`}
+                />
               ))}
             </div>
           )}
@@ -216,15 +225,7 @@ export default function Home() {
                     </h3>
                     <div className="flex flex-wrap gap-2.5">
                       {group.words.map((word) => (
-                        <button
-                          key={word}
-                          type="button"
-                          // onClick={() => wordDef.lookup(word)}
-                          className="max-w-full break-words rounded-lg border border-border/80 bg-card px-3.5 py-2 text-left text-sm text-foreground shadow-sm transition-all duration-200 [overflow-wrap:anywhere] hover:border-primary/50 hover:bg-primary/5 hover:text-primary hover:shadow active:scale-95 sm:text-base"
-                          data-testid={`button-word-${word}`}
-                        >
-                          {word}
-                        </button>
+                        <WordChip key={word} word={word} testId={`button-word-${word}`} />
                       ))}
                     </div>
                   </div>
@@ -235,17 +236,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* Definition lookup is disabled for now.
-      <WordDefinitionDialog
-        open={wordDef.open}
-        onClose={wordDef.close}
-        word={wordDef.word}
-        definition={wordDef.definition}
-        loading={wordDef.loading}
-        error={wordDef.error}
-        onSearch={handleSearch}
-      />
-      */}
     </div>
   );
 }

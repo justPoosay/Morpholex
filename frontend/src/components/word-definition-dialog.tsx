@@ -1,110 +1,196 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Loader2, Search } from "lucide-react";
-import type { WordDefinition } from "@/hooks/use-word-definition";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { Loader2, Search, Volume2, X } from "lucide-react";
+import { useWordDefinition } from "@/hooks/use-word-definition";
+import type { Run } from "@/hooks/use-word-definition";
+import { speak, speechSupported } from "@/lib/speech";
+import { wiktionaryUrl } from "@/lib/wiktionary";
+import { validateWordQuery } from "@/lib/word-query";
+
+/** How many meanings of each part of speech show before "Show all". */
+const COLLAPSED_COUNT = 3;
 
 interface WordDefinitionDialogProps {
   open: boolean;
-  onClose: () => void;
   word: string;
-  definition: WordDefinition | null;
-  loading: boolean;
-  error: boolean;
-  onSearch: (word: string) => void;
+  onClose: () => void;
+  /** Switches the dialog to another word, e.g. the base word of "plural of lighter". */
+  onLookup: (word: string) => void;
+  /** Closes the dialog and shows the word's family on the home page. */
+  onShowFamily: (word: string) => void;
+  /** Extra round buttons next to "Pronounce", like the heart that saves the word. */
+  actions?: ReactNode;
 }
 
-export function WordDefinitionDialog({
-  open,
-  onClose,
-  word,
-  definition,
-  loading,
-  error,
-  onSearch,
-}: WordDefinitionDialogProps) {
+function RoundButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
   return (
-    <Dialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 animate-in fade-in duration-200" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg max-h-[80vh] overflow-y-auto bg-card border border-border rounded-2xl shadow-xl p-8 animate-in fade-in zoom-in-95 duration-200 focus:outline-none">
-          {!definition && (
-            <Dialog.Title className="sr-only">
-              {word ? `Definition for ${word}` : "Word definition"}
-            </Dialog.Title>
-          )}
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-primary transition-colors hover:bg-muted/70"
+    >
+      {children}
+    </button>
+  );
+}
 
+/** Example sentence text, with the looked-up word in bold. */
+function RunsText({ runs }: { runs: Run[] }) {
+  return (
+    <>
+      {runs.map((run, index) =>
+        run.bold ? (
+          <strong key={index} className="font-semibold text-foreground">
+            {run.text}
+          </strong>
+        ) : (
+          <span key={index}>{run.text}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+export function WordDefinitionDialog({ open, word, onClose, onLookup, onShowFamily, actions }: WordDefinitionDialogProps) {
+  const { data, isLoading, isError, refetch } = useWordDefinition(open ? word : "");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  // A different word starts with every section collapsed again.
+  useEffect(() => {
+    setExpanded(new Set());
+  }, [word]);
+
+  const canSearch = validateWordQuery(word).ok;
+
+  return (
+    <Dialog.Root open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm animate-in fade-in duration-200" />
+        <Dialog.Content
+          aria-describedby={undefined}
+          className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 focus:outline-none sm:p-8"
+          data-testid="definition-dialog"
+        >
           <Dialog.Close
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Close"
           >
             <X size={18} />
           </Dialog.Close>
 
-          {loading && (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 size={28} className="animate-spin text-muted-foreground" />
-            </div>
-          )}
+          <div className="space-y-6">
+            <div className="space-y-3 border-b border-border/50 pb-5 pr-8">
+              <Dialog.Title className="font-serif text-3xl leading-tight text-foreground [overflow-wrap:anywhere]">
+                {word}
+              </Dialog.Title>
 
-          {error && !loading && (
-            <div className="py-12 text-center">
-              <p className="text-muted-foreground">No definition found.</p>
-            </div>
-          )}
-
-          {definition && !loading && (
-            <div className="space-y-6">
-              <div className="border-b border-border/50 pb-5">
-                <Dialog.Title className="font-serif text-3xl text-foreground">
-                  {definition.word}
-                </Dialog.Title>
-                {definition.phonetic && (
-                  <p className="text-muted-foreground font-mono text-sm mt-1 tracking-wide">
-                    {definition.phonetic}
-                  </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {speechSupported && (
+                  <RoundButton label={`Pronounce ${word}`} onClick={() => speak(word)}>
+                    <Volume2 size={16} />
+                  </RoundButton>
+                )}
+                {actions}
+                {canSearch && (
+                  <button
+                    type="button"
+                    onClick={() => onShowFamily(word)}
+                    className="ml-1 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                    data-testid="button-show-family"
+                  >
+                    <Search size={14} />
+                    Show word family
+                  </button>
                 )}
               </div>
+            </div>
 
-              <div className="space-y-6">
-                {definition.meanings.map((meaning, i) => (
-                  <div key={i}>
-                    <p className="text-xs uppercase tracking-widest font-semibold text-primary/70 mb-3">
+            {isLoading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={28} className="animate-spin text-muted-foreground" />
+              </div>
+            )}
+
+            {isError && !isLoading && (
+              <div className="space-y-3 py-8 text-center">
+                <p className="text-muted-foreground">
+                  Couldn't load the definition. Check your internet connection and try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {data === null && !isLoading && (
+              <p className="py-8 text-center text-muted-foreground">No definition found for “{word}”.</p>
+            )}
+
+            {data &&
+              data.meanings.map((meaning) => {
+                const isExpanded = expanded.has(meaning.partOfSpeech);
+                const shown = isExpanded ? meaning.definitions : meaning.definitions.slice(0, COLLAPSED_COUNT);
+
+                return (
+                  <section key={meaning.partOfSpeech}>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-primary/80">
                       {meaning.partOfSpeech}
-                    </p>
-                    <ol className="space-y-3 list-none">
-                      {meaning.definitions.map((def, j) => (
-                        <li key={j} className="flex gap-3">
-                          <span className="font-mono text-xs text-muted-foreground/60 pt-0.5 shrink-0 w-4">
-                            {j + 1}.
-                          </span>
-                          <div>
-                            <p className="text-foreground text-sm leading-relaxed">{def.definition}</p>
-                            {def.example && (
-                              <p className="text-muted-foreground text-sm italic mt-1 leading-relaxed">
-                                "{def.example}"
+                    </h3>
+                    <ol className="list-none space-y-4">
+                      {shown.map((definition, index) => (
+                        <li key={index} className="flex gap-3">
+                          <span className="w-5 shrink-0 pt-0.5 font-mono text-xs text-muted-foreground">{index + 1}.</span>
+                          <div className="space-y-1.5">
+                            <p className="text-sm leading-relaxed text-foreground">{definition.definition}</p>
+                            {definition.example && (
+                              <p className="border-l-2 border-primary/40 pl-3 text-sm italic leading-relaxed text-muted-foreground">
+                                <RunsText runs={definition.example} />
                               </p>
+                            )}
+                            {definition.baseWord && definition.baseWord.toLowerCase() !== word.toLowerCase() && (
+                              <button
+                                type="button"
+                                onClick={() => onLookup(definition.baseWord!)}
+                                className="text-sm font-medium text-primary hover:underline"
+                              >
+                                Look up “{definition.baseWord}”
+                              </button>
                             )}
                           </div>
                         </li>
                       ))}
                     </ol>
-                  </div>
-                ))}
-              </div>
+                    {!isExpanded && meaning.definitions.length > COLLAPSED_COUNT && (
+                      <button
+                        type="button"
+                        onClick={() => setExpanded((previous) => new Set(previous).add(meaning.partOfSpeech))}
+                        className="mt-3 text-sm font-medium text-primary hover:underline"
+                      >
+                        Show all {meaning.definitions.length} meanings
+                      </button>
+                    )}
+                  </section>
+                );
+              })}
 
-              <div className="border-t border-border/50 pt-5">
-                <button
-                  onClick={() => {
-                    onSearch(definition.word);
-                    onClose();
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-                >
-                  <Search size={15} />
-                  Search morphology for "{definition.word}"
-                </button>
-              </div>
-            </div>
-          )}
+            {data && (
+              <a
+                href={wiktionaryUrl(word)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                Definitions from Wiktionary, CC BY-SA 4.0
+              </a>
+            )}
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
