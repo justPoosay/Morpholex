@@ -35,6 +35,8 @@ without a Mac.
 | `Sources/Morpholex/Preferences.swift` | Keys for the saved settings |
 | `Sources/Morpholex/Clipboard.swift` | Copies a word to the clipboard |
 | `Sources/Morpholex/SavedWords.swift` | The words saved with the heart button |
+| `Sources/Morpholex/SavedWordsScreen.swift` | The saved words screen |
+| `Sources/Morpholex/Route.swift` | The screens pushed over the home screen |
 | `Resources/AppIcon.png` | App icon (the lexical-tree logo) |
 | `Info.plist` | Extra Info.plist keys (landscape support) |
 | `xtool.yml` | Bundle ID, icon and Info.plist paths |

@@ -7,6 +7,8 @@ struct ContentView: View {
     /// The word whose definition pop-up is open.
     @State private var definitionWord: DefinitionWord?
     @State private var showingSettings = false
+    /// The screens pushed on top of the home screen.
+    @State private var path: [Route] = []
     @State private var pronouncer = Pronouncer()
     @AppStorage(Preferences.voiceKey) private var voiceIdentifier = ""
 
@@ -21,6 +23,17 @@ struct ContentView: View {
     private var palette: Palette { theme.palette }
 
     var body: some View {
+        NavigationStack(path: $path) {
+            home
+                .navigationDestination(for: Route.self) { route in
+                    destination(route)
+                }
+                .toolbar(.hidden, for: .navigationBar)
+        }
+        .tint(palette.primary)
+    }
+
+    private var home: some View {
         GeometryReader { proxy in
             ScrollView {
                 content
@@ -73,10 +86,6 @@ struct ContentView: View {
                 recent
             }
 
-            if !model.hasSearched && !savedWords.words.isEmpty {
-                saved
-            }
-
             if model.failed {
                 errorBox
             }
@@ -101,6 +110,20 @@ struct ContentView: View {
             .buttonStyle(.plain)
 
             Spacer()
+
+            Button {
+                Haptics.tap()
+                searchFocused = false
+                path.append(.saved)
+            } label: {
+                Image(systemName: "heart")
+                    .font(.system(size: 18))
+                    .foregroundStyle(palette.mutedForeground)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Saved words")
 
             Button {
                 Haptics.tap()
@@ -210,30 +233,6 @@ struct ContentView: View {
         .transition(.opacity)
     }
 
-    /// Words saved with the heart button; tapping one opens its definition.
-    private var saved: some View {
-        VStack(spacing: 10) {
-            Label("Saved", systemImage: "heart")
-                .font(.system(size: 12, weight: .semibold))
-                .textCase(.uppercase)
-                .tracking(1.5)
-                .foregroundStyle(palette.mutedForeground)
-
-            FlowLayout(spacing: 8, centered: true) {
-                ForEach(savedWords.words, id: \.self) { word in
-                    Button(word) {
-                        Haptics.tap()
-                        definitionWord = DefinitionWord(word: word)
-                    }
-                    .buttonStyle(ChipButtonStyle(palette: palette, pill: true))
-                    .contextMenu { wordMenu(word) }
-                }
-            }
-        }
-        .padding(.top, 24)
-        .transition(.opacity)
-    }
-
     // MARK: - Results
 
     private var errorBox: some View {
@@ -318,6 +317,17 @@ struct ContentView: View {
     }
 
     // MARK: - Actions
+
+    @ViewBuilder
+    private func destination(_ route: Route) -> some View {
+        switch route {
+        case .saved:
+            SavedWordsScreen { word in
+                path.removeAll()
+                search(word)
+            }
+        }
+    }
 
     /// The menu shown when a word is held down.
     @ViewBuilder
