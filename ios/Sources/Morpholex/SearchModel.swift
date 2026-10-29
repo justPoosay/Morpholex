@@ -55,15 +55,28 @@ final class SearchModel {
 
         queryError = nil
         input = word
+        searchTask?.cancel()
+
+        // Words searched before are answered from the cache, so they show up instantly
+        // (and work without internet).
+        if let cached = AppCaches.results.value(for: word) {
+            result = cached
+            failed = false
+            isLoading = false
+            addToHistory(word)
+            Haptics.success()
+            return
+        }
+
         result = nil
         failed = false
         isLoading = true
 
-        searchTask?.cancel()
         searchTask = Task {
             do {
                 let result = try await api.transform(word: word)
                 guard !Task.isCancelled else { return }
+                AppCaches.results.store(result, for: word)
                 self.result = result
                 addToHistory(word)
                 Haptics.success()

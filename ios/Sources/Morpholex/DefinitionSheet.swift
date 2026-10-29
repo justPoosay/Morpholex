@@ -229,10 +229,16 @@ struct DefinitionSheet: View {
     }
 
     private func load() async {
-        state = .loading
         expandedSections = []
+        if let cached = AppCaches.definitions.value(for: word) {
+            state = .loaded(cached)
+            return
+        }
+
+        state = .loading
         do {
             if let definitions = try await DictionaryAPI().definitions(for: word) {
+                AppCaches.definitions.store(definitions, for: word)
                 state = .loaded(definitions)
             } else {
                 state = .notFound

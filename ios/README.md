@@ -24,6 +24,7 @@ without a Mac.
 | `Sources/Morpholex/ContentView.swift` | The search screen |
 | `Sources/Morpholex/SearchModel.swift` | Search state, input rules and history |
 | `Sources/Morpholex/MorpholexAPI.swift` | Client for the Morpholex backend |
+| `Sources/Morpholex/LookupCache.swift` | Saves searches and definitions so repeats are instant |
 | `Sources/Morpholex/DictionaryAPI.swift` | Wiktionary definitions client |
 | `Sources/Morpholex/DefinitionSheet.swift` | The definition pop-up |
 | `Sources/Morpholex/Pronouncer.swift` | Reads a word aloud (text-to-speech) |

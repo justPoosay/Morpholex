@@ -2,15 +2,15 @@ import Foundation
 
 /// Definitions and example sentences for one word, grouped by part of speech.
 /// Text is kept as Wiktionary's HTML and turned into styled text by the view.
-struct WordDefinitions: Sendable {
-    struct Sense: Sendable {
+struct WordDefinitions: Codable, Sendable {
+    struct Sense: Codable, Sendable {
         let definitionHTML: String
         let exampleHTML: String?
         /// For entries like "plural of lighter", the word they point to.
         let baseWord: String?
     }
 
-    struct Section: Sendable, Identifiable {
+    struct Section: Codable, Sendable, Identifiable {
         let id: Int
         let partOfSpeech: String
         let senses: [Sense]
