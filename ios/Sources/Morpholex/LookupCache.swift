@@ -53,6 +53,26 @@ final class LookupCache<Value: Codable & Sendable> {
         save()
     }
 
+    /// How many words are cached.
+    var count: Int { entries.count }
+
+    /// The size of the saved file in bytes (0 if nothing is saved yet).
+    var diskSize: Int {
+        (try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+    }
+
+    func removeAll() {
+        entries = [:]
+        order = []
+
+        let url = fileURL
+        let previous = pendingSave
+        pendingSave = Task.detached(priority: .utility) {
+            await previous?.value
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+
     private func save() {
         let snapshot = Snapshot(order: order, entries: entries)
         let url = fileURL
@@ -77,4 +97,14 @@ enum AppCaches {
     static let results = LookupCache<TransformWordResult>(name: "search-results", limit: 500)
     /// Definitions and examples from Wiktionary.
     static let definitions = LookupCache<WordDefinitions>(name: "definitions", limit: 200)
+
+    static var isEmpty: Bool { results.count == 0 && definitions.count == 0 }
+
+    /// The space both caches take on the phone, in bytes.
+    static var diskSize: Int { results.diskSize + definitions.diskSize }
+
+    static func clearAll() {
+        results.removeAll()
+        definitions.removeAll()
+    }
 }

@@ -12,6 +12,9 @@ struct SettingsScreen: View {
     @AppStorage(Preferences.appearanceKey) private var appearanceRaw = AppearanceMode.system.rawValue
     @AppStorage(Preferences.voiceKey) private var voiceIdentifier = ""
     @AppStorage(Preferences.hapticsKey) private var hapticsEnabled = true
+    @State private var confirmingClearCache = false
+    /// Changed after clearing the cache so the row's size is read again.
+    @State private var cacheRefresh = 0
     @Environment(Theme.self) private var theme
 
     private var palette: Palette { theme.palette }
@@ -28,6 +31,7 @@ struct SettingsScreen: View {
             row("History", symbol: "clock.arrow.circlepath", value: search.history.isEmpty ? "Empty" : "\(search.history.count)") {
                 HistorySettingsView(search: search, onSearch: onSearch)
             }
+            cacheRow
             row("About", symbol: "info.circle", value: AboutView.versionText) {
                 AboutView()
             }
@@ -51,6 +55,49 @@ struct SettingsScreen: View {
         // A tap confirms the switch was turned on (turning it off stays quiet).
         .onChange(of: hapticsEnabled) { _, isOn in
             if isOn { Haptics.tap() }
+        }
+    }
+
+    /// Clears the saved searches and definitions; sits directly in the list like the haptics switch.
+    @ViewBuilder
+    private var cacheRow: some View {
+        let _ = cacheRefresh
+        let isEmpty = AppCaches.isEmpty
+        let size = ByteCountFormatter.string(fromByteCount: Int64(AppCaches.diskSize), countStyle: .file)
+
+        Button {
+            Haptics.tap()
+            confirmingClearCache = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "externaldrive")
+                    .font(.system(size: 17))
+                    .foregroundStyle(palette.primary)
+                    .frame(width: 26)
+
+                Text("Clear cache")
+                    .foregroundStyle(palette.foreground)
+
+                Spacer()
+
+                Text(isEmpty ? "Empty" : size)
+                    .font(.subheadline)
+                    .foregroundStyle(palette.mutedForeground)
+            }
+            .settingsCard(palette)
+        }
+        .buttonStyle(.plain)
+        .disabled(isEmpty)
+        .opacity(isEmpty ? 0.6 : 1)
+        .confirmationDialog("Clear the cache?", isPresented: $confirmingClearCache, titleVisibility: .visible) {
+            Button("Clear cache", role: .destructive) {
+                AppCaches.clearAll()
+                cacheRefresh += 1
+                Haptics.success()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Searches and definitions will be downloaded again the next time you look them up. Your saved words and history are not affected.")
         }
     }
 
