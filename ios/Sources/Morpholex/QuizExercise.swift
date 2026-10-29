@@ -68,6 +68,62 @@ extension QuizExercise {
     }
 }
 
+/// A word of the article, or a gap with the punctuation that follows it.
+struct QuizToken: Identifiable, Sendable {
+    enum Kind: Sendable {
+        case word(String)
+        /// Gap 0 is the example.
+        case gap(number: Int, trailing: String)
+    }
+
+    let id: Int
+    var kind: Kind
+}
+
+extension QuizExercise {
+    /// The article as paragraphs of words and gaps, ready to be laid out in lines. Punctuation
+    /// right after a gap, like the comma in "(1) ........, only", stays attached to the gap so a
+    /// line never starts with it.
+    var paragraphs: [[QuizToken]] {
+        var result: [[QuizToken]] = [[]]
+        var nextID = 0
+
+        func append(_ kind: QuizToken.Kind) {
+            result[result.count - 1].append(QuizToken(id: nextID, kind: kind))
+            nextID += 1
+        }
+
+        for segment in segments {
+            switch segment {
+            case .gap(let number):
+                append(.gap(number: number, trailing: ""))
+
+            case .text(let string):
+                for (partIndex, part) in string.components(separatedBy: "\n\n").enumerated() {
+                    if partIndex > 0 { result.append([]) }
+                    var rest = Substring(part)
+
+                    if partIndex == 0,
+                       let first = rest.first, !first.isWhitespace,
+                       let last = result[result.count - 1].last,
+                       case .gap(let number, let trailing) = last.kind {
+                        let attached = rest.prefix { !$0.isWhitespace }
+                        result[result.count - 1][result[result.count - 1].count - 1].kind =
+                            .gap(number: number, trailing: trailing + String(attached))
+                        rest = rest.dropFirst(attached.count)
+                    }
+
+                    for word in rest.split(whereSeparator: { $0.isWhitespace }) {
+                        append(.word(String(word)))
+                    }
+                }
+            }
+        }
+
+        return result.filter { !$0.isEmpty }
+    }
+}
+
 /// The exercises bundled with the app (Resources/quiz.json).
 enum QuizLibrary {
     static let exercises: [QuizExercise] = {

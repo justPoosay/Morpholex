@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// One word formation exercise: read the article, type a word for each gap, then check.
+/// One word formation exercise: read the article, type a word into each gap, then check.
 struct QuizScreen: View {
     let exercise: QuizExercise
 
@@ -9,6 +9,10 @@ struct QuizScreen: View {
     @State private var answers: [String]
     @State private var checked = false
     @FocusState private var focused: Int?
+
+    /// Every word and gap of the article has this height, so the lines of text stay even.
+    private static let tokenHeight: CGFloat = 30
+    private static let fieldWidth: CGFloat = 120
 
     init(exercise: QuizExercise) {
         self.exercise = exercise
@@ -27,10 +31,10 @@ struct QuizScreen: View {
                 VStack(alignment: .leading, spacing: 24) {
                     header.id("top")
                     article
-                    answersSection
 
                     if checked {
                         resultCard.id("result")
+                        reviewSection
                     } else {
                         checkButton
                     }
@@ -49,7 +53,7 @@ struct QuizScreen: View {
         .toolbarBackground(palette.background, for: .navigationBar)
     }
 
-    // MARK: - Reading
+    // MARK: - Header
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -64,7 +68,7 @@ struct QuizScreen: View {
                 .foregroundStyle(palette.foreground)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Use the word in capitals in brackets after each gap to form a word that fits in the gap. Each correct answer is worth one point.")
+                Text("Type the correct form of the word in capitals next to each gap. Each correct answer is worth one point.")
                     .font(.subheadline)
                     .foregroundStyle(palette.mutedForeground)
 
@@ -76,126 +80,107 @@ struct QuizScreen: View {
         }
     }
 
+    // MARK: - The article
+
     private var article: some View {
-        Text(articleText)
-            .font(.system(size: 17))
-            .lineSpacing(8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    /// The article with each gap marked. While answering, a typed word appears in its gap; after
-    /// checking, each gap shows the right answer, in green if you had it and red if not.
-    private var articleText: AttributedString {
-        var result = AttributedString()
-        for segment in exercise.segments {
-            switch segment {
-            case .text(let string):
-                result += piece(string, color: palette.foreground)
-            case .gap(let number):
-                result += gapText(number)
-            }
-        }
-        return result
-    }
-
-    private func gapText(_ number: Int) -> AttributedString {
-        // Gap 0 is the example, shown as in the exam.
-        guard (1...total).contains(number) else {
-            return piece("(0) ........ ", color: palette.foreground, bold: true)
-                + piece("(\(exercise.example.base))", color: palette.primary, bold: true)
-        }
-
-        let index = number - 1
-        let gap = exercise.gaps[index]
-        let typed = answers[index].trimmingCharacters(in: .whitespaces)
-        let label = piece("(\(number)) ", color: palette.foreground, bold: true)
-
-        if checked {
-            let correct = exercise.isCorrect(answers[index], gap: index)
-            return label + piece(correct ? typed : gap.answers[0], color: correct ? palette.success : palette.destructive, bold: true)
-        }
-
-        return label
-            + piece(typed.isEmpty ? "........" : typed, color: typed.isEmpty ? palette.mutedForeground : palette.primary, bold: !typed.isEmpty)
-            + piece(" (\(gap.base))", color: palette.primary, bold: true)
-    }
-
-    private func piece(_ string: String, color: Color, bold: Bool = false) -> AttributedString {
-        var part = AttributedString(string)
-        part.foregroundColor = color
-        if bold { part.font = .system(size: 17, weight: .semibold) }
-        return part
-    }
-
-    // MARK: - Answering
-
-    private var answersSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Your answers")
-                .font(.system(size: 13, weight: .semibold))
-                .textCase(.uppercase)
-                .tracking(1.2)
-                .foregroundStyle(palette.primary)
-
-            ForEach(exercise.gaps.indices, id: \.self) { index in
-                answerRow(index)
-            }
-        }
-    }
-
-    private func answerRow(_ index: Int) -> some View {
-        let gap = exercise.gaps[index]
-        let correct = checked && exercise.isCorrect(answers[index], gap: index)
-        let wrong = checked && !correct
-        let shape = RoundedRectangle(cornerRadius: 10)
-        let border: Color = wrong
-            ? palette.destructive.opacity(0.5)
-            : correct ? palette.success.opacity(0.5) : (focused == index ? palette.primary : palette.border.opacity(0.8))
-
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                Text("\(index + 1)")
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(palette.mutedForeground)
-
-                Text(gap.base)
-                    .font(.system(size: 14, weight: .semibold))
-                    .tracking(1)
-                    .foregroundStyle(palette.primary)
-
-                Spacer()
-
-                if checked {
-                    Image(systemName: correct ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(correct ? palette.success : palette.destructive)
+        VStack(alignment: .leading, spacing: 16) {
+            ForEach(Array(exercise.paragraphs.enumerated()), id: \.offset) { _, tokens in
+                FlowLayout(spacing: 5) {
+                    ForEach(tokens) { token in
+                        tokenView(token)
+                    }
                 }
             }
+        }
+    }
 
-            TextField(
-                "",
-                text: $answers[index],
-                prompt: Text("Your answer").foregroundStyle(palette.mutedForeground.opacity(0.6))
-            )
-            .font(.system(size: 18))
-            .foregroundStyle(palette.foreground)
-            .wordInputTraits()
-            .submitLabel(index == total - 1 ? .done : .next)
-            .focused($focused, equals: index)
-            .onSubmit { focused = index + 1 < total ? index + 1 : nil }
-            .disabled(checked)
-
-            if checked {
-                Text(correct ? gap.change : "Correct answer: \(gap.answers[0]) — \(gap.change)")
-                    .font(.footnote)
-                    .foregroundStyle(correct ? palette.mutedForeground : palette.destructive)
+    @ViewBuilder
+    private func tokenView(_ token: QuizToken) -> some View {
+        switch token.kind {
+        case .word(let word):
+            Text(word)
+                .font(.system(size: 17))
+                .foregroundStyle(palette.foreground)
+                .frame(height: Self.tokenHeight)
+        case .gap(let number, let trailing):
+            if (1...total).contains(number) {
+                gapView(index: number - 1, trailing: trailing)
+            } else {
+                exampleGap(trailing: trailing)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(palette.card, in: shape)
-        .overlay(shape.stroke(border, lineWidth: focused == index ? 2 : 1))
     }
+
+    /// Gap 0, the example, shown as in the exam.
+    private func exampleGap(trailing: String) -> some View {
+        HStack(spacing: 4) {
+            Text("(0)")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(palette.foreground)
+            Text("........")
+                .foregroundStyle(palette.mutedForeground)
+            Text("(\(exercise.example.base))")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(palette.primary)
+            if !trailing.isEmpty {
+                Text(trailing).foregroundStyle(palette.foreground)
+            }
+        }
+        .font(.system(size: 17))
+        .frame(height: Self.tokenHeight)
+    }
+
+    /// A gap to type into with its base word, or, after checking, the answer.
+    private func gapView(index: Int, trailing: String) -> some View {
+        let gap = exercise.gaps[index]
+        let typed = answers[index].trimmingCharacters(in: .whitespaces)
+        let correct = checked && exercise.isCorrect(answers[index], gap: index)
+
+        return HStack(spacing: 4) {
+            Text("(\(index + 1))")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(palette.foreground)
+
+            if checked {
+                // A wrong answer stays visible, crossed out, in front of the right one.
+                if !correct && !typed.isEmpty {
+                    Text(typed)
+                        .strikethrough()
+                        .foregroundStyle(palette.mutedForeground)
+                }
+                Text(gap.answers[0])
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(correct ? palette.success : palette.destructive)
+            } else {
+                TextField("", text: $answers[index])
+                    .font(.system(size: 17))
+                    .foregroundStyle(palette.primary)
+                    .multilineTextAlignment(.center)
+                    .wordInputTraits()
+                    .submitLabel(index == total - 1 ? .done : .next)
+                    .focused($focused, equals: index)
+                    .onSubmit { focused = index + 1 < total ? index + 1 : nil }
+                    .frame(width: Self.fieldWidth)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .fill(focused == index ? palette.primary : palette.mutedForeground.opacity(0.7))
+                            .frame(height: focused == index ? 2 : 1)
+                    }
+
+                Text("(\(gap.base))")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(palette.primary)
+            }
+
+            if !trailing.isEmpty {
+                Text(trailing).foregroundStyle(palette.foreground)
+            }
+        }
+        .font(.system(size: 17))
+        .frame(height: Self.tokenHeight)
+    }
+
+    // MARK: - Checking
 
     private var checkButton: some View {
         Button(action: check) {
@@ -210,8 +195,6 @@ struct QuizScreen: View {
         .disabled(!hasAnswers)
         .opacity(hasAnswers ? 1 : 0.5)
     }
-
-    // MARK: - Result
 
     private var resultCard: some View {
         let shape = RoundedRectangle(cornerRadius: 14)
@@ -253,9 +236,49 @@ struct QuizScreen: View {
         case total: "Perfect score!"
         case (total - 1)...: "Excellent work."
         case 5...: "Good work."
-        case 3...: "Keep practising: the explanations above show what changes in each word."
-        default: "Read the explanations above and try again."
+        case 3...: "Keep practising: the review below shows what changes in each word."
+        default: "Read the review below and try again."
         }
+    }
+
+    /// Each gap's base word, answer and what changes, with what you wrote.
+    private var reviewSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Review")
+                .font(.system(size: 13, weight: .semibold))
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .foregroundStyle(palette.primary)
+
+            ForEach(exercise.gaps.indices, id: \.self) { index in
+                reviewRow(index)
+            }
+        }
+    }
+
+    private func reviewRow(_ index: Int) -> some View {
+        let gap = exercise.gaps[index]
+        let correct = exercise.isCorrect(answers[index], gap: index)
+        let typed = answers[index].trimmingCharacters(in: .whitespaces)
+        let note = correct ? gap.change : (typed.isEmpty ? "No answer · \(gap.change)" : "You wrote “\(typed)” · \(gap.change)")
+
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: correct ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundStyle(correct ? palette.success : palette.destructive)
+                .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(index + 1). \(gap.base) → \(gap.answers[0])")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(palette.foreground)
+                Text(note)
+                    .font(.footnote)
+                    .foregroundStyle(palette.mutedForeground)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .settingsCard(palette)
     }
 
     // MARK: - Actions

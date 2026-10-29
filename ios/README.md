@@ -100,9 +100,9 @@ families so derived words like `frequent` and `frequently` share one).
 | `Sources/Morpholex/VoiceCatalog.swift` | Lists the English voices installed on the iPhone |
 | `Sources/Morpholex/SavedWords.swift` | The words saved with the heart button |
 | `Sources/Morpholex/SavedWordsScreen.swift` | The saved words screen |
-| `Sources/Morpholex/QuizExercise.swift` | The quiz exercises: their format, answer checking and loading |
+| `Sources/Morpholex/QuizExercise.swift` | The quiz exercises: their format, splitting the article into words and gaps, answer checking and loading |
 | `Sources/Morpholex/QuizListScreen.swift` | The list of quiz exercises, with the best scores |
-| `Sources/Morpholex/QuizScreen.swift` | One exercise: the article, the answer fields and the score |
+| `Sources/Morpholex/QuizScreen.swift` | One exercise: the article with a field to type into at each gap, the score and the review |
 | `Sources/Morpholex/Route.swift` | The screens pushed over the home screen |
 | `Sources/Morpholex/SettingsScreen.swift` | The settings menu; each option opens its own screen |
 | `Sources/Morpholex/SettingsComponents.swift` | The page frame and card style shared by the settings screens |
