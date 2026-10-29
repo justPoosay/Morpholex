@@ -38,6 +38,7 @@ without a Mac.
 | `Sources/Morpholex/Theme.swift` | Colors, and the fade between light and dark mode |
 | `Sources/Morpholex/AppearanceMode.swift` | The Automatic / Light / Dark choice from Settings |
 | `Sources/Morpholex/Preferences.swift` | Keys for the saved settings |
+| `Sources/Morpholex/NavigationBarStyle.swift` | Serif titles for the navigation bar |
 | `Sources/Morpholex/Clipboard.swift` | Copies a word to the clipboard |
 | `Sources/Morpholex/SavedWords.swift` | The words saved with the heart button |
 | `Sources/Morpholex/SavedWordsScreen.swift` | The saved words screen |

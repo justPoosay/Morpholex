@@ -106,6 +106,10 @@ struct HSL {
     }
 
     var color: Color {
+        Color(red: rgb.red, green: rgb.green, blue: rgb.blue)
+    }
+
+    var rgb: (red: Double, green: Double, blue: Double) {
         let s = saturation / 100
         let l = lightness / 100
         let chroma = (1 - abs(2 * l - 1)) * s
@@ -123,7 +127,7 @@ struct HSL {
         }
 
         let m = l - chroma / 2
-        return Color(red: base.0 + m, green: base.1 + m, blue: base.2 + m)
+        return (base.0 + m, base.1 + m, base.2 + m)
     }
 }
 

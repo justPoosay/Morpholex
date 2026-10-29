@@ -64,44 +64,61 @@ struct DefinitionSheet: View {
         .onDisappear { pronouncer.stop() }
     }
 
+    /// The word and the close button on top; the action buttons in their own row below, so a
+    /// long word never has to share its line with them (and never breaks in the middle).
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 12) {
-                    Text(word)
-                        .font(.system(size: 32, design: .serif))
-                        .foregroundStyle(palette.foreground)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                Text(word)
+                    .font(.system(size: 32, design: .serif))
+                    .foregroundStyle(palette.foreground)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Button {
-                        Haptics.tap()
-                        pronouncer.speak(word, voiceIdentifier: voiceIdentifier)
-                        speakCount += 1
-                    } label: {
-                        Image(systemName: "speaker.wave.2.fill")
-                            .font(.system(size: 15))
-                            .foregroundStyle(palette.primary)
-                            .symbolEffect(.bounce, value: speakCount)
-                            .frame(width: 34, height: 34)
-                            .background(palette.muted, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Pronounce \(word)")
-
-                    Button {
-                        Haptics.tap()
-                        savedWords.toggle(word)
-                    } label: {
-                        let saved = savedWords.contains(word)
-                        Image(systemName: saved ? "heart.fill" : "heart")
-                            .font(.system(size: 15))
-                            .foregroundStyle(palette.primary)
-                            .symbolEffect(.bounce, value: saved)
-                            .frame(width: 34, height: 34)
-                            .background(palette.muted, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(savedWords.contains(word) ? "Remove \(word) from saved words" : "Save \(word)")
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(palette.mutedForeground)
+                        .frame(width: 34, height: 34)
+                        .background(palette.muted, in: Circle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Close")
+            }
+
+            HStack(spacing: 10) {
+                Button {
+                    Haptics.tap()
+                    pronouncer.speak(word, voiceIdentifier: voiceIdentifier)
+                    speakCount += 1
+                } label: {
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(palette.primary)
+                        .symbolEffect(.bounce, value: speakCount)
+                        .frame(width: 34, height: 34)
+                        .background(palette.muted, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Pronounce \(word)")
+
+                Button {
+                    Haptics.tap()
+                    savedWords.toggle(word)
+                } label: {
+                    let saved = savedWords.contains(word)
+                    Image(systemName: saved ? "heart.fill" : "heart")
+                        .font(.system(size: 15))
+                        .foregroundStyle(palette.primary)
+                        .symbolEffect(.bounce, value: saved)
+                        .frame(width: 34, height: 34)
+                        .background(palette.muted, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(savedWords.contains(word) ? "Remove \(word) from saved words" : "Save \(word)")
 
                 if WordQuery.validate(word) != nil {
                     Button {
@@ -110,24 +127,13 @@ struct DefinitionSheet: View {
                         Label("Show word family", systemImage: "magnifyingglass")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(palette.primary)
+                            .padding(.leading, 6)
                     }
                     .buttonStyle(.plain)
                 }
-            }
 
-            Spacer()
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(palette.mutedForeground)
-                    .frame(width: 32, height: 32)
-                    .background(palette.muted, in: Circle())
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Close")
         }
     }
 
