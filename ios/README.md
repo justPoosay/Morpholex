@@ -67,7 +67,8 @@ node ios/scripts/build-dictionary.mjs count_1w.txt
 ```
 
 Run it from the repo root. It prints how many words and families it wrote. The index it reads
-comes from the backend (`npm run build:dictionary --workspace backend`).
+comes from the backend (`npm run build:dictionary --workspace backend`, which also widens the
+families so derived words like `frequent` and `frequently` share one).
 
 ## Layout
 
