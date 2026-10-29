@@ -113,6 +113,20 @@ struct ContentView: View {
             Button {
                 Haptics.tap()
                 searchFocused = false
+                path.append(.quiz)
+            } label: {
+                Image(systemName: "pencil.and.list.clipboard")
+                    .font(.system(size: 18))
+                    .foregroundStyle(palette.mutedForeground)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Quiz")
+
+            Button {
+                Haptics.tap()
+                searchFocused = false
                 path.append(.saved)
             } label: {
                 Image(systemName: "heart")
@@ -394,6 +408,12 @@ struct ContentView: View {
             SettingsScreen(search: model) { word in
                 path.removeAll()
                 search(word)
+            }
+        case .quiz:
+            QuizListScreen()
+        case .exercise(let id):
+            if let exercise = QuizLibrary.exercises.first(where: { $0.id == id }) {
+                QuizScreen(exercise: exercise)
             }
         }
     }

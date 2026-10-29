@@ -5,3 +5,4 @@ infoPath: Info.plist
 resources:
 - Resources/words.tsv
 - Resources/families.jsonl
+- Resources/quiz.json

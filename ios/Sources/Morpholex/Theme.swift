@@ -15,6 +15,8 @@ struct Palette {
     let muted: Color
     let mutedForeground: Color
     let destructive: Color
+    /// Green, for correct answers in the quiz.
+    let success: Color
 
     init(_ scheme: ColorScheme) {
         if scheme == .dark {
@@ -28,6 +30,7 @@ struct Palette {
             mutedForeground = HSL(40, 10, 60).color
             // Lighter than the website's dark value so the error text stays readable.
             destructive = HSL(0, 72, 65).color
+            success = HSL(145, 45, 58).color
         } else {
             background = HSL(40, 20, 96).color
             foreground = HSL(220, 20, 15).color
@@ -38,6 +41,7 @@ struct Palette {
             muted = HSL(40, 15, 90).color
             mutedForeground = HSL(220, 15, 45).color
             destructive = HSL(0, 84, 60).color
+            success = HSL(145, 55, 30).color
         }
     }
 }

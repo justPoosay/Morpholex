@@ -4,7 +4,8 @@ A native SwiftUI version of the Morpholex search page. The word-family dictionar
 in the app, so searches are answered on the phone: instantly, and without internet. The
 website's backend (`POST https://morpholex.netlify.app/api/words/transform`) only gets a quiet
 background ping per search, so the admin statistics still count it. Tapping a word shows
-definitions and example sentences from Wiktionary.
+definitions and example sentences from Wiktionary. A quiz offers word formation exercises like
+Part 3 of the Cambridge C1 Advanced and C2 Proficiency exams.
 
 Built with [xtool](https://xtool.sh), so it can be developed on Linux or Windows (WSL)
 without a Mac.
@@ -53,6 +54,14 @@ than from the Linux filesystem, but later builds take a few seconds.
 | --- | --- | --- |
 | `scripts/build-and-install.cmd` | Windows only. Starts Apple Devices if it isn't running, waits for its iPhone service, then runs `xtool dev` in this folder through WSL. It finds the folder from its own location, so it works wherever the repo is cloned. | Double-click it, or run it from a terminal. |
 | `scripts/build-dictionary.mjs` | Rebuilds `Resources/words.tsv` and `Resources/families.jsonl`, the dictionary the app searches on the phone, from the website's dictionary index (`backend/src/data/word-families.json`). Words are ranked with a word-frequency list so autocomplete suggests common words first. | See below. |
+| `scripts/check-quiz.mjs` | Checks `Resources/quiz.json`, the quiz exercises, and reports which answers the word families link to their base word. | `node ios/scripts/check-quiz.mjs` |
+
+### Adding quiz exercises
+
+Add an object to `Resources/quiz.json` like the existing ones: an `id`, a `title`, a `level`, an
+`example`, the article as `text` with `{0}` for the example gap and `{1}` to `{8}` for the gaps, and
+the eight `gaps`, each with its `base` word in capitals, every accepted `answers` spelling and a short
+`change` note. Then run `node ios/scripts/check-quiz.mjs`; it lists anything malformed.
 
 ### Rebuilding the dictionary
 
@@ -91,6 +100,9 @@ families so derived words like `frequent` and `frequently` share one).
 | `Sources/Morpholex/VoiceCatalog.swift` | Lists the English voices installed on the iPhone |
 | `Sources/Morpholex/SavedWords.swift` | The words saved with the heart button |
 | `Sources/Morpholex/SavedWordsScreen.swift` | The saved words screen |
+| `Sources/Morpholex/QuizExercise.swift` | The quiz exercises: their format, answer checking and loading |
+| `Sources/Morpholex/QuizListScreen.swift` | The list of quiz exercises, with the best scores |
+| `Sources/Morpholex/QuizScreen.swift` | One exercise: the article, the answer fields and the score |
 | `Sources/Morpholex/Route.swift` | The screens pushed over the home screen |
 | `Sources/Morpholex/SettingsScreen.swift` | The settings menu; each option opens its own screen |
 | `Sources/Morpholex/SettingsComponents.swift` | The page frame and card style shared by the settings screens |
@@ -106,6 +118,7 @@ families so derived words like `frequent` and `frequently` share one).
 | `Sources/Morpholex/Clipboard.swift` | Copies a word to the clipboard |
 | `Resources/words.tsv` | The word list: every searchable word, its popularity score and where its family is stored |
 | `Resources/families.jsonl` | The word families, one per line |
+| `Resources/quiz.json` | The word formation exercises for the quiz |
 | `Resources/AppIcon.png` | App icon (the lexical-tree logo) |
 | `scripts/` | The scripts described above |
 | `Info.plist` | Extra Info.plist keys (landscape support) |
