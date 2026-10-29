@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:dictionary": "node ./scripts/build-word-families.mjs",
+    "build:dictionary": "node ./scripts/build-word-families.mjs && node ./scripts/widen-word-families.mjs",
+    "widen:dictionary": "node ./scripts/widen-word-families.mjs",
+    "check:dictionary": "node ./scripts/check-word-families.mjs",
     "db:migrate": "node --env-file=../.env ./scripts/migrate.mjs",
     "dev": "node --env-file=../.env --import tsx ./src/index.ts",
     "build": "node ./build.mjs",
