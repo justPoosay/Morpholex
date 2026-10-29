@@ -28,7 +28,13 @@ without a Mac.
 | `Sources/Morpholex/DefinitionSheet.swift` | The definition pop-up |
 | `Sources/Morpholex/Pronouncer.swift` | Reads a word aloud (text-to-speech) |
 | `Sources/Morpholex/VoiceCatalog.swift` | Lists the English voices installed on the iPhone |
-| `Sources/Morpholex/SettingsScreen.swift` | The settings screen |
+| `Sources/Morpholex/SettingsScreen.swift` | The settings menu; each option opens its own screen |
+| `Sources/Morpholex/SettingsComponents.swift` | The page frame and card style shared by the settings screens |
+| `Sources/Morpholex/AppearanceSettingsView.swift` | Settings > Appearance |
+| `Sources/Morpholex/VoiceSettingsView.swift` | Settings > Voice |
+| `Sources/Morpholex/FeedbackSettingsView.swift` | Settings > Feedback (haptics switch) |
+| `Sources/Morpholex/HistorySettingsView.swift` | Settings > History (clear recent searches) |
+| `Sources/Morpholex/AboutView.swift` | Settings > About |
 | `Sources/Morpholex/Haptics.swift` | Vibration feedback for taps and search results |
 | `Sources/Morpholex/Theme.swift` | Colors, and the fade between light and dark mode |
 | `Sources/Morpholex/AppearanceMode.swift` | The Automatic / Light / Dark choice from Settings |

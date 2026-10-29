@@ -68,10 +68,22 @@ enum VoiceCatalog {
         case .enhanced: .enhanced
         default: .standard
         }
-        // iOS sometimes puts "(Enhanced)" or "(Premium)" in the name; the row shows the quality itself.
-        let name = voice.name
+        return VoiceOption(id: voice.identifier, name: displayName(voice), quality: quality)
+    }
+
+    /// The name of the voice with this identifier, or "Automatic" when none is chosen
+    /// (or the chosen one was deleted from the phone).
+    static func name(for identifier: String) -> String {
+        guard !identifier.isEmpty, let voice = AVSpeechSynthesisVoice(identifier: identifier) else {
+            return "Automatic"
+        }
+        return displayName(voice)
+    }
+
+    /// iOS sometimes puts "(Enhanced)" or "(Premium)" in the name; the quality is shown separately.
+    private static func displayName(_ voice: AVSpeechSynthesisVoice) -> String {
+        voice.name
             .replacingOccurrences(of: " (Enhanced)", with: "")
             .replacingOccurrences(of: " (Premium)", with: "")
-        return VoiceOption(id: voice.identifier, name: name, quality: quality)
     }
 }

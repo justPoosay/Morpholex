@@ -321,9 +321,7 @@ struct ContentView: View {
                 search(word)
             }
         case .settings:
-            SettingsScreen(historyCount: model.history.count) {
-                model.clearHistory()
-            }
+            SettingsScreen(search: model)
         }
     }
 
