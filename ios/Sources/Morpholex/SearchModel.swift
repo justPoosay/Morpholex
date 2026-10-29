@@ -65,6 +65,8 @@ final class SearchModel {
             isLoading = false
             addToHistory(word)
             Haptics.success()
+            // Quietly lets the backend count the search; this returns at once.
+            api.recordSearch(word: word)
             return
         }
 
