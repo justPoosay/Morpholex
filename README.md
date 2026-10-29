@@ -19,6 +19,7 @@
 - [x] Populate the admin panel with real search analytics from Postgres.
 - [x] Improve admin analytics for debugging and remove obsolete lookup checks.
 - [x] Replace the old orange-box logo with a transparent lexical-tree wordmark.
+- [x] Widen the word families so derived words (`frequent` / `frequently`, `regular` / `irregular`, `memory` / `memorable`) share a family: hand-written sets plus spelling rules in `backend/scripts/widen-word-families.mjs`. It runs as the last step of `npm run build:dictionary --workspace backend`; `npm run check:dictionary --workspace backend` checks that typical derivations are linked.
 
 ## To Do
 
