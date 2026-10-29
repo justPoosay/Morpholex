@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
-import { Search, Loader2, History, ArrowRight } from "lucide-react";
+import { Search, Loader2, History, ArrowRight, X } from "lucide-react";
+import { ContextMenuItem } from "@/components/ui/context-menu";
 import { ApiError, useTransformWord } from "@/api";
 import { AppHeader } from "@/components/app-header";
 import {
@@ -10,6 +11,7 @@ import {
   WORD_QUERY_RULE_MESSAGE,
 } from "@/lib/word-query";
 import { WordChip } from "@/components/word-chip";
+import { addToHistory, removeFromHistory, useHistory } from "@/lib/history";
 
 const RETRYABLE_API_STATUSES = new Set([500, 502, 503, 504]);
 
@@ -25,7 +27,7 @@ function shouldRetryTransformRequest(failureCount: number, error: unknown) {
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
+  const history = useHistory();
   const [queryError, setQueryError] = useState<string | null>(null);
 
   const transformMutation = useTransformWord({
@@ -35,27 +37,6 @@ export default function Home() {
     },
   });
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Load history on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("word-transformer-history");
-    if (saved) {
-      try {
-        setHistory(JSON.parse(saved));
-      } catch (e) {
-        // ignore
-      }
-    }
-  }, []);
-
-  const addToHistory = (word: string) => {
-    setHistory((prev) => {
-      const filtered = prev.filter((w) => w.toLowerCase() !== word.toLowerCase());
-      const newHistory = [word, ...filtered].slice(0, 10);
-      localStorage.setItem("word-transformer-history", JSON.stringify(newHistory));
-      return newHistory;
-    });
-  };
 
   const handleSearch = (word: string) => {
     const validated = validateWordQuery(word);
@@ -186,6 +167,12 @@ export default function Home() {
                   variant="pill"
                   onClick={() => handleSearch(h)}
                   testId={`button-history-${h}`}
+                  menuItems={
+                    <ContextMenuItem onSelect={() => removeFromHistory(h)}>
+                      <X className="mr-2 h-4 w-4" />
+                      Remove from history
+                    </ContextMenuItem>
+                  }
                 />
               ))}
             </div>

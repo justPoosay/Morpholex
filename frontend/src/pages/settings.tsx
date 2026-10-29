@@ -1,8 +1,21 @@
-import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { Check, Monitor, Moon, Sun, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useLocation } from "wouter";
 import { AppHeader } from "@/components/app-header";
 import { PageSection } from "@/components/page-section";
 import { useTheme, type Theme } from "@/components/theme-provider";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { clearHistory, removeFromHistory, useHistory } from "@/lib/history";
 import { speak, speechSupported, useEnglishVoices, voiceStore } from "@/lib/speech";
 import { cn } from "@/lib/utils";
 
@@ -94,6 +107,62 @@ function VoiceSection() {
   );
 }
 
+function HistorySection() {
+  const history = useHistory();
+  const [, navigate] = useLocation();
+
+  return (
+    <PageSection title="History" description="Your recent searches, kept in this browser. Click one to search it again.">
+      {history.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No recent searches yet. Words you search for show up here.</p>
+      ) : (
+        <div className="space-y-4">
+          <ul className="space-y-2" data-testid="history-list">
+            {history.map((word) => (
+              <li key={word} className="flex items-center gap-1 rounded-lg border border-border/80 bg-card py-1 pl-4 pr-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/?q=${encodeURIComponent(word)}`)}
+                  className="min-w-0 flex-1 py-1.5 text-left font-serif text-lg text-foreground transition-colors [overflow-wrap:anywhere] hover:text-primary"
+                >
+                  {word}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeFromHistory(word)}
+                  aria-label={`Remove ${word} from history`}
+                  title="Remove"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button type="button" className="text-sm font-medium text-red-600 hover:underline dark:text-red-400" data-testid="button-clear-history">
+                Clear history
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear your recent searches?</AlertDialogTitle>
+                <AlertDialogDescription>This can't be undone. Your saved words are not affected.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={clearHistory}>Clear history</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+    </PageSection>
+  );
+}
+
 export default function Settings() {
   const { theme, setTheme } = useTheme();
 
@@ -132,6 +201,8 @@ export default function Settings() {
         </PageSection>
 
         <VoiceSection />
+
+        <HistorySection />
       </main>
     </div>
   );
