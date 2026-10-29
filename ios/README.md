@@ -25,10 +25,12 @@ without a Mac.
 | `Sources/Morpholex/SearchModel.swift` | Search state, input rules and history |
 | `Sources/Morpholex/MorpholexAPI.swift` | Client for the Morpholex backend |
 | `Sources/Morpholex/LookupCache.swift` | Saves searches and definitions so repeats are instant |
-| `Sources/Morpholex/WordIndex.swift` | Searches the bundled word list by prefix, for autocomplete |
+| `Sources/Morpholex/LocalDictionary.swift` | The word-family dictionary bundled in the app: searches are answered on the phone |
+| `Sources/Morpholex/WordIndex.swift` | The bundled word list: finds a word's family and autocomplete matches for a prefix |
 | `Sources/Morpholex/Suggestion.swift` | One autocomplete suggestion (saved, recent or dictionary) |
-| `Resources/words.tsv` | The word list: every searchable word with a popularity score |
-| `scripts/build-word-list.mjs` | Rebuilds `words.tsv` from the dictionary data and a word-frequency list |
+| `Resources/words.tsv` | The word list: every searchable word, its popularity score and where its family is stored |
+| `Resources/families.jsonl` | The word families, one per line |
+| `scripts/build-dictionary.mjs` | Rebuilds `words.tsv` and `families.jsonl` from the website's dictionary data and a word-frequency list |
 | `Sources/Morpholex/DictionaryAPI.swift` | Wiktionary definitions client |
 | `Sources/Morpholex/DefinitionSheet.swift` | The definition pop-up |
 | `Sources/Morpholex/Pronouncer.swift` | Reads a word aloud (text-to-speech) |

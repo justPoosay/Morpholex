@@ -1,13 +1,15 @@
 import Foundation
 
-/// The bundled word list (Resources/words.tsv, built by scripts/build-word-list.mjs),
-/// searched by prefix for autocomplete.
+/// The bundled word list (Resources/words.tsv, built by scripts/build-dictionary.mjs).
+/// It finds a word's family for searching, and the most popular words for a prefix for autocomplete.
 ///
-/// The file is sorted, so all the words starting with a prefix form one block that a binary
-/// search finds; the best few in that block are then picked by popularity score.
+/// The file is sorted, so a word, or all the words starting with a prefix, are found with a
+/// binary search; the best few of a prefix's block are then picked by popularity score.
 struct WordIndex: Sendable {
     private let words: [String]
     private let scores: [UInt8]
+    /// Where each word's family starts in families.jsonl.
+    private let offsets: [UInt32]
 
     /// Reads the list from the app bundle. Takes a moment, so call it off the main thread.
     static func load() -> WordIndex? {
@@ -20,32 +22,50 @@ struct WordIndex: Sendable {
 
         var words: [String] = []
         var scores: [UInt8] = []
+        var offsets: [UInt32] = []
         words.reserveCapacity(140_000)
         scores.reserveCapacity(140_000)
+        offsets.reserveCapacity(140_000)
 
-        // Each line is "word<TAB>score". Walking the raw bytes is much faster than splitting a String.
+        // Each line is "word<TAB>score<TAB>offset". Walking the raw bytes is much faster than
+        // splitting a String.
         let tab = UInt8(ascii: "\t")
         let newline = UInt8(ascii: "\n")
         var lineStart = data.startIndex
-        var tabIndex: Int?
+        var firstTab: Int?
+        var secondTab: Int?
 
         for index in data.indices {
             let byte = data[index]
             if byte == tab {
-                tabIndex = index
+                if firstTab == nil {
+                    firstTab = index
+                } else {
+                    secondTab = index
+                }
             } else if byte == newline {
-                if let tabIndex {
-                    words.append(String(decoding: data[lineStart..<tabIndex], as: UTF8.self))
-                    scores.append(Self.number(in: data[(tabIndex + 1)..<index]))
+                if let firstTab, let secondTab {
+                    words.append(String(decoding: data[lineStart..<firstTab], as: UTF8.self))
+                    scores.append(UInt8(min(Self.number(in: data[(firstTab + 1)..<secondTab]), 255)))
+                    offsets.append(UInt32(clamping: Self.number(in: data[(secondTab + 1)..<index])))
                 }
                 lineStart = index + 1
-                tabIndex = nil
+                firstTab = nil
+                secondTab = nil
             }
         }
 
         guard !words.isEmpty else { return nil }
         self.words = words
         self.scores = scores
+        self.offsets = offsets
+    }
+
+    /// Where the word's family starts in families.jsonl, or nil if the word isn't in the list.
+    func familyOffset(of word: String) -> Int? {
+        let index = firstIndex(notBefore: word)
+        guard index < words.count, words[index] == word else { return nil }
+        return Int(offsets[index])
     }
 
     /// The most popular words that start with `prefix`, best first. Words in `excluding` are skipped.
@@ -97,11 +117,11 @@ struct WordIndex: Sendable {
         return low
     }
 
-    private static func number(in bytes: Data.SubSequence) -> UInt8 {
+    private static func number(in bytes: Data.SubSequence) -> Int {
         var value = 0
         for byte in bytes where byte >= UInt8(ascii: "0") && byte <= UInt8(ascii: "9") {
             value = value * 10 + Int(byte - UInt8(ascii: "0"))
         }
-        return UInt8(min(value, 255))
+        return value
     }
 }

@@ -12,8 +12,8 @@ final class SearchModel {
     private(set) var history: [String]
     /// Autocomplete suggestions for what is typed in the search box.
     private(set) var suggestions: [Suggestion] = []
-    /// The bundled word list; nil until it has finished loading in the background.
-    @ObservationIgnored private var wordIndex: WordIndex?
+    /// The dictionary bundled in the app; nil until it has finished loading in the background.
+    @ObservationIgnored private var dictionary: LocalDictionary?
     @ObservationIgnored private var savedWords: [String] = []
 
     /// How many suggestions to show, and how many of those may be the user's own words.
@@ -31,10 +31,10 @@ final class SearchModel {
     init() {
         history = UserDefaults.standard.stringArray(forKey: Self.historyKey) ?? []
 
-        // Load the word list in the background so starting the app stays fast.
+        // Load the dictionary in the background so starting the app stays fast.
         Task { [weak self] in
-            let index = await Task.detached(priority: .utility) { WordIndex.load() }.value
-            self?.wordIndex = index
+            let dictionary = await Task.detached(priority: .utility) { LocalDictionary.load() }.value
+            self?.dictionary = dictionary
             self?.refreshSuggestions()
         }
     }
@@ -90,9 +90,9 @@ final class SearchModel {
         addOwn(savedWords, as: .saved)
         addOwn(history, as: .recent)
 
-        if let wordIndex {
+        if let dictionary {
             let remaining = Self.suggestionLimit - result.count
-            for word in wordIndex.suggestions(for: prefix, limit: remaining, excluding: seen) {
+            for word in dictionary.suggestions(for: prefix, limit: remaining, excluding: seen) {
                 result.append(Suggestion(word: word, kind: .dictionary))
             }
         }
@@ -111,16 +111,17 @@ final class SearchModel {
         input = word
         searchTask?.cancel()
 
-        // Words searched before are answered from the cache, so they show up instantly
-        // (and work without internet).
+        // The dictionary is bundled in the app, so searches are answered on the phone: instantly,
+        // and without internet. The server only gets a quiet ping so its statistics still count them.
+        if let local = dictionary?.result(for: word) {
+            show(local, for: word)
+            return
+        }
+
+        // Until the dictionary has loaded (the first moment after the app starts), words
+        // searched before are answered from the cache, and the rest from the server.
         if let cached = AppCaches.results.value(for: word) {
-            result = cached
-            failed = false
-            isLoading = false
-            addToHistory(word)
-            Haptics.success()
-            // Quietly lets the backend count the search; this returns at once.
-            api.recordSearch(word: word)
+            show(cached, for: word)
             return
         }
 
@@ -144,6 +145,17 @@ final class SearchModel {
             }
             isLoading = false
         }
+    }
+
+    /// Shows a result that was found without waiting for the server.
+    private func show(_ found: TransformWordResult, for word: String) {
+        result = found
+        failed = false
+        isLoading = false
+        addToHistory(word)
+        Haptics.success()
+        // Quietly lets the backend count the search; this returns at once.
+        api.recordSearch(word: word)
     }
 
     /// Back to the start screen (tapping the logo).

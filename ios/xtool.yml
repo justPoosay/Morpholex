@@ -4,3 +4,4 @@ iconPath: Resources/AppIcon.png
 infoPath: Info.plist
 resources:
 - Resources/words.tsv
+- Resources/families.jsonl
