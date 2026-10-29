@@ -143,6 +143,19 @@
   --ring: 345 35% 55%;
 }
 
+/* Fades the colors when light/dark mode changes (added to <html> by ThemeProvider for a moment). */
+.theme-fade,
+.theme-fade *,
+.theme-fade *::before,
+.theme-fade *::after {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease,
+    fill 0.35s ease,
+    stroke 0.35s ease !important;
+}
+
 @layer base {
   * {
     @apply border-border;

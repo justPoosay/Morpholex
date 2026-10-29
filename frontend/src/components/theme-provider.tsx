@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "dark" | "light" | "system"
+export type Theme = "dark" | "light" | "system"
 
 type ThemeProviderProps = {
   children: React.ReactNode
@@ -20,39 +20,74 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
+/** How long the colors take to fade when the mode changes (see .theme-fade in index.css). */
+const FADE_MS = 400
+
+function readSavedTheme(storageKey: string, fallback: Theme): Theme {
+  try {
+    const saved = localStorage.getItem(storageKey)
+    return saved === "dark" || saved === "light" || saved === "system" ? saved : fallback
+  } catch {
+    return fallback
+  }
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  const [theme, setTheme] = useState<Theme>(() => readSavedTheme(storageKey, defaultTheme))
 
+  // Light or dark follows the choice, and "system" (Automatic) follows the device live,
+  // for example when the operating system switches to dark mode in the evening.
   useEffect(() => {
     const root = window.document.documentElement
+    const media = window.matchMedia("(prefers-color-scheme: dark)")
+    let fadeTimer: number | undefined
 
-    root.classList.remove("light", "dark")
+    const apply = (animate: boolean) => {
+      const resolved = theme === "system" ? (media.matches ? "dark" : "light") : theme
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
+      if (animate) {
+        root.classList.add("theme-fade")
+        window.clearTimeout(fadeTimer)
+        fadeTimer = window.setTimeout(() => root.classList.remove("theme-fade"), FADE_MS)
+      }
 
-      root.classList.add(systemTheme)
-      return
+      root.classList.remove("light", "dark")
+      root.classList.add(resolved)
+      root.style.colorScheme = resolved
     }
 
-    root.classList.add(theme)
+    // The first run only confirms what index.html already applied; later runs fade.
+    apply(false)
+
+    if (theme !== "system") return () => window.clearTimeout(fadeTimer)
+
+    const onChange = () => apply(true)
+    media.addEventListener("change", onChange)
+    return () => {
+      media.removeEventListener("change", onChange)
+      window.clearTimeout(fadeTimer)
+    }
   }, [theme])
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
+    setTheme: (next: Theme) => {
+      // Fade the colors for the switch the user just made.
+      const root = window.document.documentElement
+      root.classList.add("theme-fade")
+      window.setTimeout(() => root.classList.remove("theme-fade"), FADE_MS)
+
+      try {
+        localStorage.setItem(storageKey, next)
+      } catch {
+        // Private browsing can refuse storage; the choice still applies until the page closes.
+      }
+      setTheme(next)
     },
   }
 

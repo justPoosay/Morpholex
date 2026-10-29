@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Loader2, Moon, Sun, History, ArrowRight } from "lucide-react";
+import { Search, Loader2, History, ArrowRight } from "lucide-react";
 import { ApiError, useTransformWord } from "@/api";
-import { MorpholexLogo } from "@/components/morpholex-logo";
-import { useTheme } from "@/components/theme-provider";
+import { AppHeader } from "@/components/app-header";
 import {
   sanitizeWordQueryInput,
   validateWordQuery,
@@ -29,8 +28,7 @@ export default function Home() {
   const [searchInput, setSearchInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [queryError, setQueryError] = useState<string | null>(null);
-  const { theme, setTheme } = useTheme();
-  
+
   const transformMutation = useTransformWord({
     mutation: {
       retry: shouldRetryTransformRequest,
@@ -93,13 +91,16 @@ export default function Home() {
     }
   };
 
+  /** Back to the start screen (clicking the logo). */
+  const resetSearch = () => {
+    transformMutation.reset();
+    setSearchInput("");
+    setQueryError(null);
+  };
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSearch(searchInput);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const hasSearched = transformMutation.data || transformMutation.isPending;
@@ -108,18 +109,7 @@ export default function Home() {
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-background text-foreground transition-colors duration-300 font-sans selection:bg-primary/20 selection:text-primary">
-      {/* Header / Nav */}
-      <header className="fixed left-0 right-0 top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background/80 px-4 py-3 backdrop-blur-md sm:px-6">
-        <MorpholexLogo className="h-14 w-auto max-w-[250px] text-foreground sm:h-16 sm:max-w-[320px]" />
-        <button
-          onClick={toggleTheme}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          data-testid="button-toggle-theme"
-          aria-label="Toggle theme"
-        >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-      </header>
+      <AppHeader onLogoClick={resetSearch} />
 
       {/* Main Content Area */}
       <main className={`mx-auto w-full max-w-4xl px-4 transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] sm:px-6 md:px-8 ${hasSearched ? "pt-24 pb-12 sm:pt-28 sm:pb-20" : "flex min-h-[100dvh] flex-col justify-center pt-24 pb-12 sm:pt-28 sm:pb-20"}`}>
