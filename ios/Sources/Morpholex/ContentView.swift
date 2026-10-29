@@ -43,7 +43,7 @@ struct ContentView: View {
                     .frame(
                         maxWidth: .infinity,
                         minHeight: proxy.size.height,
-                        alignment: model.hasSearched ? .top : .center
+                        alignment: model.hasSearched || showSuggestions ? .top : .center
                     )
             }
             .scrollDismissesKeyboard(.interactively)
@@ -51,6 +51,7 @@ struct ContentView: View {
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .background(palette.background.ignoresSafeArea())
         .animation(.spring(duration: 0.5), value: model.hasSearched)
+        .animation(.spring(duration: 0.4), value: showSuggestions)
         .animation(.easeOut(duration: 0.3), value: model.result?.originalWord)
         .sheet(item: $definitionWord) { item in
             DefinitionSheet(word: item.word) { word in
@@ -62,11 +63,15 @@ struct ContentView: View {
 
     private var content: some View {
         VStack(spacing: 0) {
-            if !model.hasSearched {
+            if !model.hasSearched && !showSuggestions {
                 hero
             }
 
             searchField
+
+            if showSuggestions {
+                suggestionList
+            }
 
             if let error = model.queryError {
                 Text(error)
@@ -76,7 +81,7 @@ struct ContentView: View {
                     .padding(.top, 12)
             }
 
-            if !model.hasSearched && !model.history.isEmpty {
+            if !model.hasSearched && !showSuggestions && !model.history.isEmpty {
                 recent
             }
 
@@ -174,7 +179,10 @@ struct ContentView: View {
             .submitLabel(.search)
             .focused($searchFocused)
             .onSubmit(submit)
-            .onChange(of: model.input) { model.inputChanged() }
+            .onChange(of: model.input) {
+                model.inputChanged()
+                model.updateSuggestions(saved: savedWords.words)
+            }
 
             Button(action: submit) {
                 Group {
@@ -202,6 +210,68 @@ struct ContentView: View {
                 .stroke(searchFocused ? palette.primary : palette.border.opacity(0.5), lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+    }
+
+    /// Autocomplete suggestions show while the search box is being used.
+    private var showSuggestions: Bool {
+        searchFocused && !model.suggestions.isEmpty
+    }
+
+    private var suggestionList: some View {
+        let shape = RoundedRectangle(cornerRadius: 12)
+
+        return VStack(spacing: 0) {
+            ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { offset, suggestion in
+                if offset > 0 {
+                    Rectangle()
+                        .fill(palette.border.opacity(0.5))
+                        .frame(height: 1)
+                }
+
+                Button {
+                    Haptics.tap()
+                    search(suggestion.word)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: icon(for: suggestion.kind))
+                            .font(.system(size: 14))
+                            .foregroundStyle(palette.mutedForeground)
+                            .frame(width: 20)
+
+                        highlighted(suggestion.word)
+                            .font(.system(size: 18))
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .background(palette.card, in: shape)
+        .overlay(shape.stroke(palette.border.opacity(0.8), lineWidth: 1))
+        .padding(.top, 8)
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    private func icon(for kind: Suggestion.Kind) -> String {
+        switch kind {
+        case .saved: "heart"
+        case .recent: "clock.arrow.circlepath"
+        case .dictionary: "magnifyingglass"
+        }
+    }
+
+    /// The part already typed is muted; the rest of the word, the completion, stands out.
+    private func highlighted(_ word: String) -> Text {
+        let typedCount = model.input.count
+        let typed = Text(String(word.prefix(typedCount))).foregroundStyle(palette.mutedForeground)
+        let completion = Text(String(word.dropFirst(typedCount)))
+            .fontWeight(.semibold)
+            .foregroundStyle(palette.foreground)
+        return typed + completion
     }
 
     private var recent: some View {

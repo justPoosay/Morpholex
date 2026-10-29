@@ -10,6 +10,15 @@ final class SearchModel {
     private(set) var isLoading = false
     private(set) var failed = false
     private(set) var history: [String]
+    /// Autocomplete suggestions for what is typed in the search box.
+    private(set) var suggestions: [Suggestion] = []
+    /// The bundled word list; nil until it has finished loading in the background.
+    @ObservationIgnored private var wordIndex: WordIndex?
+    @ObservationIgnored private var savedWords: [String] = []
+
+    /// How many suggestions to show, and how many of those may be the user's own words.
+    private static let suggestionLimit = 6
+    private static let personalLimit = 3
 
     private let api = MorpholexAPI()
     @ObservationIgnored private var searchTask: Task<Void, Never>?
@@ -21,6 +30,13 @@ final class SearchModel {
 
     init() {
         history = UserDefaults.standard.stringArray(forKey: Self.historyKey) ?? []
+
+        // Load the word list in the background so starting the app stays fast.
+        Task { [weak self] in
+            let index = await Task.detached(priority: .utility) { WordIndex.load() }.value
+            self?.wordIndex = index
+            self?.refreshSuggestions()
+        }
     }
 
     var hasSearched: Bool { result != nil || isLoading }
@@ -44,6 +60,44 @@ final class SearchModel {
         } else {
             queryError = WordQuery.ruleMessage
         }
+    }
+
+    /// Called after the text changes. Saved words and recent searches that match come first
+    /// (at most three), then the most popular dictionary words.
+    func updateSuggestions(saved: [String]) {
+        savedWords = saved
+        refreshSuggestions()
+    }
+
+    private func refreshSuggestions() {
+        let prefix = input
+        guard !prefix.isEmpty else {
+            suggestions = []
+            return
+        }
+
+        var result: [Suggestion] = []
+        var seen: Set<String> = []
+
+        func addOwn(_ words: [String], as kind: Suggestion.Kind) {
+            for word in words where result.count < Self.personalLimit && word.hasPrefix(prefix) {
+                // Multi-word saved entries like "a cappella" can't be searched.
+                if WordQuery.validate(word) != nil, seen.insert(word).inserted {
+                    result.append(Suggestion(word: word, kind: kind))
+                }
+            }
+        }
+        addOwn(savedWords, as: .saved)
+        addOwn(history, as: .recent)
+
+        if let wordIndex {
+            let remaining = Self.suggestionLimit - result.count
+            for word in wordIndex.suggestions(for: prefix, limit: remaining, excluding: seen) {
+                result.append(Suggestion(word: word, kind: .dictionary))
+            }
+        }
+
+        suggestions = result
     }
 
     func search(_ text: String) {
