@@ -49,6 +49,7 @@ final class SearchModel {
     func search(_ text: String) {
         guard let word = WordQuery.validate(text) else {
             queryError = WordQuery.ruleMessage
+            Haptics.warning()
             return
         }
 
@@ -65,10 +66,12 @@ final class SearchModel {
                 guard !Task.isCancelled else { return }
                 self.result = result
                 addToHistory(word)
+                Haptics.success()
             } catch {
                 // A newer search replaced this one; it owns the loading state now.
                 guard !Task.isCancelled else { return }
                 failed = true
+                Haptics.failure()
             }
             isLoading = false
         }

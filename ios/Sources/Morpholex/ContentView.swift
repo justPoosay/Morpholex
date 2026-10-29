@@ -6,6 +6,7 @@ struct ContentView: View {
     @FocusState private var searchFocused: Bool
     /// The word whose definition pop-up is open.
     @State private var definitionWord: DefinitionWord?
+    @State private var showingSettings = false
 
     private struct DefinitionWord: Identifiable {
         let word: String
@@ -41,6 +42,9 @@ struct ContentView: View {
                 definitionWord = nil
                 search(word)
             }
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsSheet()
         }
     }
 
@@ -88,6 +92,20 @@ struct ContentView: View {
             .buttonStyle(.plain)
 
             Spacer()
+
+            Button {
+                Haptics.tap()
+                searchFocused = false
+                showingSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 18))
+                    .foregroundStyle(palette.mutedForeground)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -170,8 +188,11 @@ struct ContentView: View {
 
             FlowLayout(spacing: 8, centered: true) {
                 ForEach(model.history, id: \.self) { word in
-                    Button(word) { search(word) }
-                        .buttonStyle(ChipButtonStyle(palette: palette, pill: true))
+                    Button(word) {
+                        Haptics.tap()
+                        search(word)
+                    }
+                    .buttonStyle(ChipButtonStyle(palette: palette, pill: true))
                 }
             }
         }
@@ -251,6 +272,7 @@ struct ContentView: View {
             FlowLayout(spacing: 10) {
                 ForEach(group.words, id: \.self) { word in
                     Button(word) {
+                        Haptics.tap()
                         searchFocused = false
                         definitionWord = DefinitionWord(word: word)
                     }

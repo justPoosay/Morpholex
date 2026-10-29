@@ -26,6 +26,11 @@ without a Mac.
 | `Sources/Morpholex/MorpholexAPI.swift` | Client for the Morpholex backend |
 | `Sources/Morpholex/DictionaryAPI.swift` | Wiktionary definitions client |
 | `Sources/Morpholex/DefinitionSheet.swift` | The definition pop-up |
+| `Sources/Morpholex/Pronouncer.swift` | Reads a word aloud (text-to-speech) |
+| `Sources/Morpholex/VoiceCatalog.swift` | Lists the English voices installed on the iPhone |
+| `Sources/Morpholex/SettingsSheet.swift` | The settings window (currently the voice menu) |
+| `Sources/Morpholex/Haptics.swift` | Vibration feedback for taps and search results |
+| `Sources/Morpholex/Theme.swift` | Colors, and the fade between light and dark mode |
 | `Resources/AppIcon.png` | App icon (the lexical-tree logo) |
 | `Info.plist` | Extra Info.plist keys (landscape support) |
 | `xtool.yml` | Bundle ID, icon and Info.plist paths |

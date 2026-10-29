@@ -9,6 +9,10 @@ struct DefinitionSheet: View {
     @State private var word: String
     @State private var state = LoadState.loading
     @State private var expandedSections: Set<Int> = []
+    @State private var pronouncer = Pronouncer()
+    @AppStorage(Preferences.voiceKey) private var voiceIdentifier = ""
+    /// Counts taps on the speaker button so its icon can bounce.
+    @State private var speakCount = 0
     @Environment(Theme.self) private var theme
     @Environment(\.dismiss) private var dismiss
 
@@ -56,14 +60,32 @@ struct DefinitionSheet: View {
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .task(id: word) { await load() }
+        .onDisappear { pronouncer.stop() }
     }
 
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 10) {
-                Text(word)
-                    .font(.system(size: 32, design: .serif))
-                    .foregroundStyle(palette.foreground)
+                HStack(spacing: 12) {
+                    Text(word)
+                        .font(.system(size: 32, design: .serif))
+                        .foregroundStyle(palette.foreground)
+
+                    Button {
+                        Haptics.tap()
+                        pronouncer.speak(word, voiceIdentifier: voiceIdentifier)
+                        speakCount += 1
+                    } label: {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.system(size: 15))
+                            .foregroundStyle(palette.primary)
+                            .symbolEffect(.bounce, value: speakCount)
+                            .frame(width: 34, height: 34)
+                            .background(palette.muted, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Pronounce \(word)")
+                }
 
                 if WordQuery.validate(word) != nil {
                     Button {
