@@ -16,6 +16,7 @@ struct ContentView: View {
     }
 
     @Environment(Theme.self) private var theme
+    @Environment(SavedWords.self) private var savedWords
 
     private var palette: Palette { theme.palette }
 
@@ -70,6 +71,10 @@ struct ContentView: View {
 
             if !model.hasSearched && !model.history.isEmpty {
                 recent
+            }
+
+            if !model.hasSearched && !savedWords.words.isEmpty {
+                saved
             }
 
             if model.failed {
@@ -205,6 +210,30 @@ struct ContentView: View {
         .transition(.opacity)
     }
 
+    /// Words saved with the heart button; tapping one opens its definition.
+    private var saved: some View {
+        VStack(spacing: 10) {
+            Label("Saved", systemImage: "heart")
+                .font(.system(size: 12, weight: .semibold))
+                .textCase(.uppercase)
+                .tracking(1.5)
+                .foregroundStyle(palette.mutedForeground)
+
+            FlowLayout(spacing: 8, centered: true) {
+                ForEach(savedWords.words, id: \.self) { word in
+                    Button(word) {
+                        Haptics.tap()
+                        definitionWord = DefinitionWord(word: word)
+                    }
+                    .buttonStyle(ChipButtonStyle(palette: palette, pill: true))
+                    .contextMenu { wordMenu(word) }
+                }
+            }
+        }
+        .padding(.top, 24)
+        .transition(.opacity)
+    }
+
     // MARK: - Results
 
     private var errorBox: some View {
@@ -304,6 +333,17 @@ struct ContentView: View {
             Haptics.tap()
         } label: {
             Label("Copy", systemImage: "doc.on.doc")
+        }
+
+        Button {
+            savedWords.toggle(word)
+            Haptics.tap()
+        } label: {
+            if savedWords.contains(word) {
+                Label("Remove from saved", systemImage: "heart.slash")
+            } else {
+                Label("Save", systemImage: "heart")
+            }
         }
 
         // Multi-word entries like "a cappella" can't be searched.

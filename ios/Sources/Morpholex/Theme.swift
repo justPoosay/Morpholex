@@ -68,6 +68,7 @@ final class Theme {
 /// device switched or the user picked Light or Dark in Settings.
 struct ThemedRoot: View {
     let theme: Theme
+    let savedWords: SavedWords
     @AppStorage(Preferences.appearanceKey) private var appearanceRaw = AppearanceMode.system.rawValue
     /// The window's scheme, which is the device's unless a mode is forced.
     @Environment(\.colorScheme) private var windowScheme
@@ -78,6 +79,7 @@ struct ThemedRoot: View {
     var body: some View {
         ContentView()
             .environment(theme)
+            .environment(savedWords)
             .onAppear {
                 mode.applyToWindows()
                 theme.scheme = targetScheme

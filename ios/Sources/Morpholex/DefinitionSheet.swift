@@ -14,6 +14,7 @@ struct DefinitionSheet: View {
     /// Counts taps on the speaker button so its icon can bounce.
     @State private var speakCount = 0
     @Environment(Theme.self) private var theme
+    @Environment(SavedWords.self) private var savedWords
     @Environment(\.dismiss) private var dismiss
 
     private enum LoadState {
@@ -85,6 +86,21 @@ struct DefinitionSheet: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Pronounce \(word)")
+
+                    Button {
+                        Haptics.tap()
+                        savedWords.toggle(word)
+                    } label: {
+                        let saved = savedWords.contains(word)
+                        Image(systemName: saved ? "heart.fill" : "heart")
+                            .font(.system(size: 15))
+                            .foregroundStyle(palette.primary)
+                            .symbolEffect(.bounce, value: saved)
+                            .frame(width: 34, height: 34)
+                            .background(palette.muted, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(savedWords.contains(word) ? "Remove \(word) from saved words" : "Save \(word)")
                 }
 
                 if WordQuery.validate(word) != nil {

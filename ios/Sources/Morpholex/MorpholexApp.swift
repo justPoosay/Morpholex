@@ -4,10 +4,11 @@ import SwiftUI
 @main
 struct MorpholexApp: App {
     @State private var theme = Theme()
+    @State private var savedWords = SavedWords()
 
     var body: some Scene {
         WindowGroup {
-            ThemedRoot(theme: theme)
+            ThemedRoot(theme: theme, savedWords: savedWords)
         }
     }
 }
