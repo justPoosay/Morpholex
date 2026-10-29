@@ -25,6 +25,9 @@ without a Mac.
 | `Sources/Morpholex/SearchModel.swift` | Search state, input rules and history |
 | `Sources/Morpholex/MorpholexAPI.swift` | Client for the Morpholex backend |
 | `Sources/Morpholex/LookupCache.swift` | Saves searches and definitions so repeats are instant |
+| `Sources/Morpholex/WordIndex.swift` | Searches the bundled word list by prefix, for autocomplete |
+| `Resources/words.tsv` | The word list: every searchable word with a popularity score |
+| `scripts/build-word-list.mjs` | Rebuilds `words.tsv` from the dictionary data and a word-frequency list |
 | `Sources/Morpholex/DictionaryAPI.swift` | Wiktionary definitions client |
 | `Sources/Morpholex/DefinitionSheet.swift` | The definition pop-up |
 | `Sources/Morpholex/Pronouncer.swift` | Reads a word aloud (text-to-speech) |

@@ -41,6 +41,7 @@ struct AboutView: View {
             VStack(spacing: 8) {
                 linkRow("Open English WordNet", detail: "Word families · CC BY 4.0", address: "https://en-word.net")
                 linkRow("Wiktionary", detail: "Definitions and examples · CC BY-SA 4.0", address: "https://en.wiktionary.org")
+                linkRow("Peter Norvig's word counts", detail: "Ranks the autocomplete suggestions", address: "https://norvig.com/ngrams/")
             }
         }
     }

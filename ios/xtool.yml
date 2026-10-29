@@ -2,3 +2,5 @@ version: 1
 bundleID: com.mikepc.morpholex
 iconPath: Resources/AppIcon.png
 infoPath: Info.plist
+resources:
+- Resources/words.tsv
