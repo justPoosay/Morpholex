@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Admin from "@/pages/admin";
 import Settings from "@/pages/settings";
+import Saved from "@/pages/saved";
 import { DefinitionProvider } from "@/components/definition-provider";
 
 const queryClient = new QueryClient();
@@ -15,6 +16,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/saved" component={Saved} />
       <Route path="/settings" component={Settings} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />

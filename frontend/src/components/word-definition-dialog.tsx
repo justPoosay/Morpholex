@@ -1,9 +1,10 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Loader2, Search, Volume2, X } from "lucide-react";
+import { Heart, Loader2, Search, Volume2, X } from "lucide-react";
 import { useWordDefinition } from "@/hooks/use-word-definition";
 import type { Run } from "@/hooks/use-word-definition";
+import { useSavedWords } from "@/lib/saved-words";
 import { speak, speechSupported } from "@/lib/speech";
 import { wiktionaryUrl } from "@/lib/wiktionary";
 import { validateWordQuery } from "@/lib/word-query";
@@ -19,8 +20,6 @@ interface WordDefinitionDialogProps {
   onLookup: (word: string) => void;
   /** Closes the dialog and shows the word's family on the home page. */
   onShowFamily: (word: string) => void;
-  /** Extra round buttons next to "Pronounce", like the heart that saves the word. */
-  actions?: ReactNode;
 }
 
 function RoundButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
@@ -54,8 +53,10 @@ function RunsText({ runs }: { runs: Run[] }) {
   );
 }
 
-export function WordDefinitionDialog({ open, word, onClose, onLookup, onShowFamily, actions }: WordDefinitionDialogProps) {
+export function WordDefinitionDialog({ open, word, onClose, onLookup, onShowFamily }: WordDefinitionDialogProps) {
   const { data, isLoading, isError, refetch } = useWordDefinition(open ? word : "");
+  const { isSaved, toggle } = useSavedWords();
+  const saved = isSaved(word);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // A different word starts with every section collapsed again.
@@ -93,7 +94,9 @@ export function WordDefinitionDialog({ open, word, onClose, onLookup, onShowFami
                     <Volume2 size={16} />
                   </RoundButton>
                 )}
-                {actions}
+                <RoundButton label={saved ? `Remove ${word} from saved words` : `Save ${word}`} onClick={() => toggle(word)}>
+                  <Heart size={16} className={saved ? "fill-current" : undefined} />
+                </RoundButton>
                 {canSearch && (
                   <button
                     type="button"

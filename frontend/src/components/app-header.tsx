@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Settings } from "lucide-react";
+import { Heart, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { MorpholexLogo } from "@/components/morpholex-logo";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,10 @@ interface NavItem {
 }
 
 /** The icons on the right of the header. */
-const NAV: NavItem[] = [{ href: "/settings", label: "Settings", icon: Settings }];
+const NAV: NavItem[] = [
+  { href: "/saved", label: "Saved words", icon: Heart },
+  { href: "/settings", label: "Settings", icon: Settings },
+];
 
 interface AppHeaderProps {
   /** Called when the logo is clicked, e.g. to clear the home screen's results. */

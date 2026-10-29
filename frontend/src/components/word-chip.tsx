@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Copy, ExternalLink, Search, Volume2 } from "lucide-react";
+import { Copy, ExternalLink, Heart, HeartOff, Search, Volume2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useDefinition } from "@/components/definition-provider";
 import {
@@ -9,6 +9,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { toast } from "@/hooks/use-toast";
+import { useSavedWords } from "@/lib/saved-words";
 import { speak, speechSupported } from "@/lib/speech";
 import { wiktionaryUrl } from "@/lib/wiktionary";
 import { validateWordQuery } from "@/lib/word-query";
@@ -36,6 +37,8 @@ interface WordChipProps {
 export function WordChip({ word, variant = "chip", onClick, testId, menuItems }: WordChipProps) {
   const { lookup } = useDefinition();
   const [, navigate] = useLocation();
+  const { isSaved, toggle } = useSavedWords();
+  const saved = isSaved(word);
 
   const copy = async () => {
     try {
@@ -64,6 +67,10 @@ export function WordChip({ word, variant = "chip", onClick, testId, menuItems }:
         <ContextMenuItem onSelect={copy}>
           <Copy className="mr-2 h-4 w-4" />
           Copy
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={() => toggle(word)}>
+          {saved ? <HeartOff className="mr-2 h-4 w-4" /> : <Heart className="mr-2 h-4 w-4" />}
+          {saved ? "Remove from saved" : "Save"}
         </ContextMenuItem>
         {/* Multi-word entries like "a cappella" can't be searched. */}
         {validateWordQuery(word).ok && (
