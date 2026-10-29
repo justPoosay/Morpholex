@@ -87,6 +87,12 @@ final class SearchModel {
         isLoading = false
     }
 
+    /// Erases the "Recent" list.
+    func clearHistory() {
+        history = []
+        UserDefaults.standard.removeObject(forKey: Self.historyKey)
+    }
+
     private func addToHistory(_ word: String) {
         let others = history.filter { $0.lowercased() != word.lowercased() }
         history = Array(([word] + others).prefix(10))

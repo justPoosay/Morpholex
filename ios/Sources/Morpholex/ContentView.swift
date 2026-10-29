@@ -44,7 +44,9 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingSettings) {
-            SettingsSheet()
+            SettingsSheet(historyCount: model.history.count) {
+                model.clearHistory()
+            }
         }
     }
 

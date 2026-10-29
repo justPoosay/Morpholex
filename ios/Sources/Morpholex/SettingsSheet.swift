@@ -3,6 +3,11 @@ import SwiftUI
 /// The settings window, opened from the gear button in the header.
 /// Add new sections to `body`, each built like `appearanceSection`.
 struct SettingsSheet: View {
+    /// How many searches are in the "Recent" list.
+    let historyCount: Int
+    let onClearHistory: () -> Void
+
+    @State private var confirmingClear = false
     @AppStorage(Preferences.appearanceKey) private var appearanceRaw = AppearanceMode.system.rawValue
     @AppStorage(Preferences.voiceKey) private var voiceIdentifier = ""
     @AppStorage(Preferences.hapticsKey) private var hapticsEnabled = true
@@ -23,6 +28,7 @@ struct SettingsSheet: View {
                 appearanceSection
                 voiceSection
                 feedbackSection
+                historySection
             }
             .padding(24)
         }
@@ -195,6 +201,55 @@ struct SettingsSheet: View {
             .onChange(of: hapticsEnabled) { _, isOn in
                 if isOn { Haptics.tap() }
             }
+        }
+    }
+
+    // MARK: - History
+
+    private var historySection: some View {
+        let shape = RoundedRectangle(cornerRadius: 10)
+        let isEmpty = historyCount == 0
+
+        return VStack(alignment: .leading, spacing: 16) {
+            sectionTitle("History")
+
+            Button {
+                Haptics.tap()
+                confirmingClear = true
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Clear search history")
+                            .foregroundStyle(isEmpty ? palette.mutedForeground : palette.destructive)
+                        Text(isEmpty ? "Nothing to clear" : "\(historyCount) recent \(historyCount == 1 ? "search" : "searches")")
+                            .font(.footnote)
+                            .foregroundStyle(palette.mutedForeground)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "trash")
+                        .foregroundStyle(isEmpty ? palette.mutedForeground : palette.destructive)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(palette.background, in: shape)
+                .overlay(shape.stroke(palette.border.opacity(0.8), lineWidth: 1))
+                .contentShape(shape)
+            }
+            .buttonStyle(.plain)
+            .disabled(isEmpty)
+            .opacity(isEmpty ? 0.6 : 1)
+        }
+        .confirmationDialog("Clear your recent searches?", isPresented: $confirmingClear, titleVisibility: .visible) {
+            Button("Clear history", role: .destructive) {
+                onClearHistory()
+                Haptics.success()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This can't be undone.")
         }
     }
 
