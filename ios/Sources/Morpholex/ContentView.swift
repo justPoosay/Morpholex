@@ -7,6 +7,8 @@ struct ContentView: View {
     /// The word whose definition pop-up is open.
     @State private var definitionWord: DefinitionWord?
     @State private var showingSettings = false
+    @State private var pronouncer = Pronouncer()
+    @AppStorage(Preferences.voiceKey) private var voiceIdentifier = ""
 
     private struct DefinitionWord: Identifiable {
         let word: String
@@ -195,6 +197,7 @@ struct ContentView: View {
                         search(word)
                     }
                     .buttonStyle(ChipButtonStyle(palette: palette, pill: true))
+                    .contextMenu { wordMenu(word) }
                 }
             }
         }
@@ -279,12 +282,45 @@ struct ContentView: View {
                         definitionWord = DefinitionWord(word: word)
                     }
                     .buttonStyle(ChipButtonStyle(palette: palette))
+                    .contextMenu { wordMenu(word) }
                 }
             }
         }
     }
 
     // MARK: - Actions
+
+    /// The menu shown when a word is held down.
+    @ViewBuilder
+    private func wordMenu(_ word: String) -> some View {
+        Button {
+            pronouncer.speak(word, voiceIdentifier: voiceIdentifier)
+        } label: {
+            Label("Pronounce", systemImage: "speaker.wave.2")
+        }
+
+        Button {
+            Clipboard.copy(word)
+            Haptics.tap()
+        } label: {
+            Label("Copy", systemImage: "doc.on.doc")
+        }
+
+        // Multi-word entries like "a cappella" can't be searched.
+        if WordQuery.validate(word) != nil {
+            Button {
+                search(word)
+            } label: {
+                Label("Show word family", systemImage: "magnifyingglass")
+            }
+        }
+
+        if let url = DictionaryAPI.pageURL(for: word) {
+            Link(destination: url) {
+                Label("Open in Wiktionary", systemImage: "safari")
+            }
+        }
+    }
 
     private func submit() {
         search(model.input)
