@@ -23,3 +23,15 @@
 ## To Do
 
 - No open items right now.
+
+## iOS app
+
+A native SwiftUI version of Morpholex lives in [`ios/`](ios/) (branch `swift`). It is built
+with [xtool](https://xtool.sh), so no Mac is needed. See [`ios/README.md`](ios/README.md) for
+the setup, the layout and what each script does.
+
+| Task | Command |
+| --- | --- |
+| Build and install on a connected iPhone (Windows, one click) | Double-click `ios\scripts\build-and-install.cmd` |
+| Build and install on a connected iPhone (any system) | `cd ios && xtool dev` |
+| Rebuild the dictionary bundled in the app | `node ios/scripts/build-dictionary.mjs <count_1w.txt>` (see [`ios/README.md`](ios/README.md#rebuilding-the-dictionary)) |
