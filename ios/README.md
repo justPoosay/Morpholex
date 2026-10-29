@@ -31,6 +31,8 @@ without a Mac.
 | `Sources/Morpholex/SettingsSheet.swift` | The settings window (currently the voice menu) |
 | `Sources/Morpholex/Haptics.swift` | Vibration feedback for taps and search results |
 | `Sources/Morpholex/Theme.swift` | Colors, and the fade between light and dark mode |
+| `Sources/Morpholex/AppearanceMode.swift` | The Automatic / Light / Dark choice from Settings |
+| `Sources/Morpholex/Preferences.swift` | Keys for the saved settings |
 | `Resources/AppIcon.png` | App icon (the lexical-tree logo) |
 | `Info.plist` | Extra Info.plist keys (landscape support) |
 | `xtool.yml` | Bundle ID, icon and Info.plist paths |

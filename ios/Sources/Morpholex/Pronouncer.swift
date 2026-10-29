@@ -1,11 +1,5 @@
 import AVFoundation
 
-/// UserDefaults keys for the settings window.
-enum Preferences {
-    /// The chosen voice's identifier; empty means the default US English voice.
-    static let voiceKey = "voiceIdentifier"
-}
-
 /// Reads a word aloud with iOS's built-in text-to-speech (no internet needed).
 @MainActor
 final class Pronouncer {

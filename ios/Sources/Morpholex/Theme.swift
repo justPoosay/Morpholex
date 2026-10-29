@@ -51,7 +51,7 @@ final class Theme {
     var palette: Palette { Palette(scheme) }
 
     init() {
-        scheme = Self.deviceScheme()
+        scheme = AppearanceMode.saved.forcedScheme ?? Self.deviceScheme()
     }
 
     /// The device's current setting, so the very first frame already has the right colors.
@@ -64,16 +64,26 @@ final class Theme {
     }
 }
 
-/// Wraps the app and fades its colors whenever the device switches between light and dark.
+/// Wraps the app and fades its colors whenever the light/dark mode changes, whether the
+/// device switched or the user picked Light or Dark in Settings.
 struct ThemedRoot: View {
     let theme: Theme
-    @Environment(\.colorScheme) private var deviceScheme
+    @AppStorage(Preferences.appearanceKey) private var appearanceRaw = AppearanceMode.system.rawValue
+    /// The window's scheme, which is the device's unless a mode is forced.
+    @Environment(\.colorScheme) private var windowScheme
+
+    private var mode: AppearanceMode { AppearanceMode(rawValue: appearanceRaw) ?? .system }
+    private var targetScheme: ColorScheme { mode.forcedScheme ?? windowScheme }
 
     var body: some View {
         ContentView()
             .environment(theme)
-            .onAppear { theme.scheme = deviceScheme }
-            .onChange(of: deviceScheme) { _, newScheme in
+            .onAppear {
+                mode.applyToWindows()
+                theme.scheme = targetScheme
+            }
+            .onChange(of: appearanceRaw) { mode.applyToWindows() }
+            .onChange(of: targetScheme) { _, newScheme in
                 withAnimation(.easeInOut(duration: 0.35)) {
                     theme.scheme = newScheme
                 }
