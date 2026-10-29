@@ -6,7 +6,6 @@ struct ContentView: View {
     @FocusState private var searchFocused: Bool
     /// The word whose definition pop-up is open.
     @State private var definitionWord: DefinitionWord?
-    @State private var showingSettings = false
     /// The screens pushed on top of the home screen.
     @State private var path: [Route] = []
     @State private var pronouncer = Pronouncer()
@@ -57,11 +56,6 @@ struct ContentView: View {
             DefinitionSheet(word: item.word) { word in
                 definitionWord = nil
                 search(word)
-            }
-        }
-        .sheet(isPresented: $showingSettings) {
-            SettingsSheet(historyCount: model.history.count) {
-                model.clearHistory()
             }
         }
     }
@@ -128,7 +122,7 @@ struct ContentView: View {
             Button {
                 Haptics.tap()
                 searchFocused = false
-                showingSettings = true
+                path.append(.settings)
             } label: {
                 Image(systemName: "gearshape")
                     .font(.system(size: 18))
@@ -325,6 +319,10 @@ struct ContentView: View {
             SavedWordsScreen { word in
                 path.removeAll()
                 search(word)
+            }
+        case .settings:
+            SettingsScreen(historyCount: model.history.count) {
+                model.clearHistory()
             }
         }
     }

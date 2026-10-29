@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// The settings window, opened from the gear button in the header.
+/// The settings screen, which slides in when the gear button in the header is tapped.
 /// Add new sections to `body`, each built like `appearanceSection`.
-struct SettingsSheet: View {
+struct SettingsScreen: View {
     /// How many searches are in the "Recent" list.
     let historyCount: Int
     let onClearHistory: () -> Void
@@ -14,7 +14,6 @@ struct SettingsSheet: View {
     @State private var groups: [VoiceGroup] = []
     @State private var pronouncer = Pronouncer()
     @Environment(Theme.self) private var theme
-    @Environment(\.dismiss) private var dismiss
 
     private var palette: Palette { theme.palette }
 
@@ -24,7 +23,6 @@ struct SettingsSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
-                header
                 appearanceSection
                 voiceSection
                 feedbackSection
@@ -33,33 +31,12 @@ struct SettingsSheet: View {
             }
             .padding(24)
         }
-        .background(palette.card.ignoresSafeArea())
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .background(palette.background.ignoresSafeArea())
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbarBackground(palette.background, for: .navigationBar)
         .onAppear { groups = VoiceCatalog.groups() }
         .onDisappear { pronouncer.stop() }
-    }
-
-    private var header: some View {
-        HStack {
-            Text("Settings")
-                .font(.system(size: 32, design: .serif))
-                .foregroundStyle(palette.foreground)
-
-            Spacer()
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(palette.mutedForeground)
-                    .frame(width: 32, height: 32)
-                    .background(palette.muted, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Close")
-        }
     }
 
     // MARK: - Appearance
@@ -97,7 +74,7 @@ struct SettingsSheet: View {
             .foregroundStyle(selected ? palette.primaryForeground : palette.foreground)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(selected ? palette.primary : palette.background, in: shape)
+            .background(selected ? palette.primary : palette.card, in: shape)
             .overlay(shape.stroke(selected ? Color.clear : palette.border.opacity(0.8), lineWidth: 1))
             .contentShape(shape)
         }
@@ -168,7 +145,7 @@ struct SettingsSheet: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(selected ? palette.primary.opacity(0.08) : palette.background, in: shape)
+            .background(selected ? palette.primary.opacity(0.08) : palette.card, in: shape)
             .overlay(shape.stroke(selected ? palette.primary.opacity(0.6) : palette.border.opacity(0.8), lineWidth: 1))
             .contentShape(shape)
         }
@@ -196,7 +173,7 @@ struct SettingsSheet: View {
             .tint(palette.primary)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(palette.background, in: shape)
+            .background(palette.card, in: shape)
             .overlay(shape.stroke(palette.border.opacity(0.8), lineWidth: 1))
             // A tap confirms the switch was turned on (turning it off stays quiet).
             .onChange(of: hapticsEnabled) { _, isOn in
@@ -235,7 +212,7 @@ struct SettingsSheet: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(palette.background, in: shape)
+                .background(palette.card, in: shape)
                 .overlay(shape.stroke(palette.border.opacity(0.8), lineWidth: 1))
                 .contentShape(shape)
             }
@@ -321,7 +298,7 @@ struct SettingsSheet: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(palette.background, in: shape)
+                    .background(palette.card, in: shape)
                     .overlay(shape.stroke(palette.border.opacity(0.8), lineWidth: 1))
                     .contentShape(shape)
                 }
