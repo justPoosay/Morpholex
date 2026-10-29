@@ -321,7 +321,10 @@ struct ContentView: View {
                 search(word)
             }
         case .settings:
-            SettingsScreen(search: model)
+            SettingsScreen(search: model) { word in
+                path.removeAll()
+                search(word)
+            }
         }
     }
 

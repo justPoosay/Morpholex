@@ -32,7 +32,7 @@ without a Mac.
 | `Sources/Morpholex/SettingsComponents.swift` | The page frame and card style shared by the settings screens |
 | `Sources/Morpholex/AppearanceSettingsView.swift` | Settings > Appearance |
 | `Sources/Morpholex/VoiceSettingsView.swift` | Settings > Voice |
-| `Sources/Morpholex/HistorySettingsView.swift` | Settings > History (clear recent searches) |
+| `Sources/Morpholex/HistorySettingsView.swift` | Settings > History (the recent searches, and clearing them) |
 | `Sources/Morpholex/AboutView.swift` | Settings > About |
 | `Sources/Morpholex/Haptics.swift` | Vibration feedback for taps and search results |
 | `Sources/Morpholex/Theme.swift` | Colors, and the fade between light and dark mode |

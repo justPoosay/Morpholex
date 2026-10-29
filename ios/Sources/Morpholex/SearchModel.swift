@@ -87,6 +87,12 @@ final class SearchModel {
         isLoading = false
     }
 
+    /// Removes one search from the "Recent" list.
+    func removeFromHistory(_ word: String) {
+        history.removeAll { $0 == word }
+        UserDefaults.standard.set(history, forKey: Self.historyKey)
+    }
+
     /// Erases the "Recent" list.
     func clearHistory() {
         history = []

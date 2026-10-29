@@ -6,6 +6,8 @@ import SwiftUI
 /// `...SettingsView` built on `SettingsPage` and add a `row` for it below.
 struct SettingsScreen: View {
     let search: SearchModel
+    /// Goes back to the home screen and searches the word (used by the History screen).
+    let onSearch: (String) -> Void
 
     @AppStorage(Preferences.appearanceKey) private var appearanceRaw = AppearanceMode.system.rawValue
     @AppStorage(Preferences.voiceKey) private var voiceIdentifier = ""
@@ -24,7 +26,7 @@ struct SettingsScreen: View {
             }
             hapticsRow
             row("History", symbol: "clock.arrow.circlepath", value: search.history.isEmpty ? "Empty" : "\(search.history.count)") {
-                HistorySettingsView(search: search)
+                HistorySettingsView(search: search, onSearch: onSearch)
             }
             row("About", symbol: "info.circle", value: AboutView.versionText) {
                 AboutView()
